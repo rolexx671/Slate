@@ -72,6 +72,7 @@ function pageViewport(page, zoom = state.zoom) {
 const defaultSettings = {
 	settingsVersion: 5,
 	language: 'ru',
+	theme: 'dark',
 	defaultZoom: 1,
 	fitWidth: true,
 	pageLayout: 'continuous',
@@ -253,6 +254,7 @@ const elements = {
 	settingsClose: document.getElementById('settings-close'),
 	settingsDone: document.getElementById('settings-done'),
 	settingLanguage: document.getElementById('setting-language'),
+	settingTheme: document.getElementById('setting-theme'),
 	settingDefaultZoom: document.getElementById('setting-default-zoom'),
 	settingPageLayout: document.getElementById('setting-page-layout'),
 	settingAutoSave: document.getElementById('setting-auto-save'),
@@ -1339,12 +1341,16 @@ function localizeUi() {
 	setText('.edit-help strong', 'nativeEditing');
 	setText('.edit-help span', 'nativeEditingDesc');
 	setText('#settings-title', 'settings');
+	for (const [value, key] of [['dark', 'theme_dark'], ['light', 'theme_light'], ['system', 'theme_system']]) {
+		elements.settingTheme.querySelector(`[value="${value}"]`).textContent = t(key);
+	}
 	const settingTitles = [
 		['autoSaveSetting', 'autoSaveDesc'],
 		['autoUpdateSetting', 'autoUpdateDesc'],
 		['defaultZoom', 'defaultZoomDesc'],
 		['language', 'languageDesc'],
 		['pageLayoutSetting', 'pageLayoutDesc'],
+		['themeLabel', 'themeDescription'],
 		['fitWidthSetting', 'fitWidthDesc'],
 		['showTools', 'showToolsDesc'],
 		['showRail', 'showRailDesc'],
@@ -1416,6 +1422,7 @@ function loadSettings() {
 	try {
 		const parsed = JSON.parse(localStorage.getItem(SETTINGS_KEY) || '{}');
 		const settings = { ...defaultSettings, ...parsed };
+		settings.theme = window.SlateTheme.normalize(settings.theme);
 		if (!['ru', 'en', 'fr', 'auto'].includes(settings.language)) settings.language = 'ru';
 		settings.autoUpdate = false;
 		if (parsed.settingsVersion !== defaultSettings.settingsVersion) {
@@ -19171,6 +19178,7 @@ function closeSettings() {
 
 function syncSettingsForm() {
 	elements.settingLanguage.value = state.settings.language;
+	elements.settingTheme.value = state.settings.theme;
 	elements.settingDefaultZoom.value = String(state.settings.defaultZoom);
 	elements.settingPageLayout.value = state.settings.pageLayout === 'single' ? 'single' : 'continuous';
 	if (elements.settingAutoSave) elements.settingAutoSave.checked = state.settings.autoSave !== false;
@@ -19193,6 +19201,8 @@ function syncSettingsForm() {
 function applySettingsFromForm() {
 	const previousLayout = state.settings.pageLayout;
 	state.settings.language = elements.settingLanguage.value;
+	state.settings.theme = window.SlateTheme.normalize(elements.settingTheme.value);
+	window.SlateTheme.apply(state.settings.theme);
 	state.settings.defaultZoom = Number(elements.settingDefaultZoom.value);
 	state.settings.pageLayout = elements.settingPageLayout.value === 'single' ? 'single' : 'continuous';
 	state.settings.autoSave = elements.settingAutoSave ? elements.settingAutoSave.checked : true;
@@ -19333,6 +19343,12 @@ function bindTauriMenuEvents() {
 	tauriListen('alto-close-file', closeCurrentFile);
 	tauriListen('alto-share-pdf', () => openSharePopover());
 	tauriListen('alto-request-quit', () => void requestQuitApp());
+	tauriListen('slate-theme-select', event => {
+		state.settings.theme = window.SlateTheme.normalize(event.payload);
+		elements.settingTheme.value = state.settings.theme;
+		saveSettings();
+		window.SlateTheme.apply(state.settings.theme);
+	});
 	tauriListen('slate-update-available', (event) => {
 		const info = event?.payload;
 		if (info?.version) showUpdateToast(info);
@@ -21012,6 +21028,7 @@ elements.compareNext?.addEventListener('click', () => {
 });
 
 for (const control of [
+	elements.settingTheme,
 	elements.settingLanguage,
 	elements.settingDefaultZoom,
 	elements.settingPageLayout,
@@ -21236,6 +21253,11 @@ document.addEventListener('drop', (event) => {
 // Slate RU uses manual updates only.
 function checkForUpdates() {}
 function showUpdateToast() {}
+window.SlateTheme.apply(state.settings.theme);
+window.addEventListener('slate-theme-synced', event => {
+ state.settings.theme = event.detail;
+ elements.settingTheme.value = event.detail;
+});
 bindTauriMenuEvents();
 bindShareUi();
 bindWindowCloseGuard();

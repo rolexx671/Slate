@@ -604,3 +604,5 @@ export function localizeError(error) {
  ];
  return rules.find(([pattern]) => pattern.test(text))?.[1] || 'Не удалось выполнить операцию. Подробности сохранены в журнале диагностики.';
 }
+
+Object.assign(ru, { themeLabel: "Тема оформления", themeDescription: "Выберите светлую, тёмную тему или оформление macOS.", theme_dark: "Тёмная", theme_light: "Светлая", theme_system: "Как в macOS" });

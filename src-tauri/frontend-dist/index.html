@@ -4,7 +4,9 @@
 		<meta charset="UTF-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 		<title>Slate RU</title>
+		<script src="./theme.js"></script>
 		<link rel="stylesheet" href="./styles.css" />
+		<link rel="stylesheet" href="./dark.css" />
 	</head>
 	<body>
 		<main class="app-shell" id="app">
@@ -1315,6 +1317,15 @@
 				</div>
 
 				<div class="settings-grid hidden" data-settings-pane="display">
+                    <label class="setting-row theme-setting-row">
+                        <span><strong id="setting-theme-label">Тема оформления</strong>
+                        <small id="setting-theme-desc">Выберите светлую, тёмную тему или оформление macOS.</small></span>
+                        <select id="setting-theme">
+                            <option value="dark">Тёмная</option>
+                            <option value="light">Светлая</option>
+                            <option value="system">Как в macOS</option>
+                        </select>
+                    </label>
 					<label class="setting-row">
 						<span>
 							<strong>Открывать документы по ширине окна</strong>

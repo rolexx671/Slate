@@ -17,6 +17,7 @@ use sofdocs_desktop::{
 // Module local au binaire (pas dans la lib partagée) : l'auto-update n'est utile
 // qu'à l'app Tauri, pas au sidecar `alto-mcp`.
 mod updater;
+mod appearance;
 
 // Impression depuis le Finder (Apple Event « print documents »). Spécifique macOS :
 // Tauri ne forwarde QUE l'event « open », pas « print ». On installe donc notre
@@ -2174,6 +2175,7 @@ fn main() {
         .manage(DocCache::default())
         .manage(DocBaselines::default())
         .setup(|app| {
+            appearance::restore(app.handle());
             #[cfg(target_os = "macos")]
             mac_print::apply_persisted_apple_languages();
 
@@ -2357,8 +2359,9 @@ fn main() {
                 .text("unsupported-right-rail", "Правая панель инструментов")
                 .build()?;
             let theme_menu = SubmenuBuilder::new(app, "Тема оформления")
-                .text("unsupported-theme-system", "Системная")
-                .text("unsupported-theme-light", "Светлая")
+                .text("theme-system", "Как в macOS")
+                .text("theme-light", "Светлая")
+                .text("theme-dark", "Тёмная")
                 .build()?;
             let audio_menu = SubmenuBuilder::new(app, "Озвучивание")
                 .text("unsupported-read-aloud", "Прочитать вслух")
@@ -2497,7 +2500,11 @@ fn main() {
                 _ => None,
             };
 
-            if event.id().as_ref() == "new-window" {
+            if let Some(theme) = event.id().as_ref().strip_prefix("theme-") {
+                if let Some(window) = focused_webview(app) {
+                    let _ = window.emit("slate-theme-select", theme);
+                }
+            } else if event.id().as_ref() == "new-window" {
                 let _ = spawn_empty_window(app.clone());
             } else if let Some(event_name) = event_name {
                 if let Some(window) = focused_webview(app) {
@@ -2510,6 +2517,7 @@ fn main() {
             }
         })
         .invoke_handler(tauri::generate_handler![
+            appearance::set_native_theme,
             analyze_pdf_page,
             cache_document,
             analyze_pdf_page_cached,

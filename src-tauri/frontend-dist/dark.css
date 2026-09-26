@@ -1,0 +1,542 @@
+/* Dark application chrome. PDF pages, editor overlays and signature ink keep their original colors. */
+:root[data-theme="dark"] {
+ color-scheme: dark;
+ --bg: #171717;
+ --panel: #212121;
+ --surface: #292929;
+ --glass: rgba(33, 33, 33, .94);
+ --muted-panel: #303030;
+ --text: #ececec;
+ --muted: #acafb5;
+ --faint: #96999f;
+ --border: rgba(255, 255, 255, .12);
+ --border-strong: rgba(255, 255, 255, .22);
+ --accent: #f0786e;
+ --accent-soft: #3b2827;
+ --shadow: 0 1px 2px rgba(0,0,0,.3), 0 18px 55px rgba(0,0,0,.4);
+}
+
+:root[data-theme="dark"] :is(.topbar) {
+ background: rgba(33, 33, 33, 0.86);
+}
+
+:root[data-theme="dark"] :is(.tab-strip,
+.dialog-titlebar,
+.print-dialog-top) {
+ border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+ background: var(--panel);
+}
+
+:root[data-theme="dark"] :is(.tab-strip-home:hover,
+.document-tab-close:hover,
+.recent-context-menu-sep) {
+ background: rgba(255, 255, 255, 0.08);
+}
+
+:root[data-theme="dark"] :is(.tab-strip-home.active) {
+ background: rgba(255, 255, 255, 0.13);
+}
+
+:root[data-theme="dark"] :is(.tab-scroll-button) {
+ border: 1px solid rgba(255, 255, 255, 0.12);
+ background: rgba(33, 33, 33, 0.72);
+}
+
+:root[data-theme="dark"] :is(.tab-scroll-button:hover) {
+ background: var(--panel);
+ border-color: rgba(255, 255, 255, 0.2);
+}
+
+:root[data-theme="dark"] :is(.document-tab) {
+ border: 1px solid rgba(255, 255, 255, 0.12);
+ background: rgba(33, 33, 33, 0.48);
+ color: var(--text);
+}
+
+:root[data-theme="dark"] :is(.document-tab.active,
+.document-tab.just-saved,
+.share-invite-field input,
+.share-link-settings,
+.share-link-settings:hover,
+.tools-panel,
+.format-font,
+.font-combo-trigger,
+.font-combo-popover,
+.font-combo-search-wrap,
+.font-combo-search,
+.font-combo-search:focus,
+.format-size-field,
+.format-toggle,
+.format-color,
+.reader,
+.home-action,
+.home-dropzone:hover,
+.home-view-btn.active,
+.recent-card,
+.recent-card-thumb,
+.sign-item,
+.signature-toolbar button,
+.signature-font-button,
+.create-view,
+.create-close,
+.create-pick,
+.block-resize-handle,
+.text-resize-zone.zone-nw::after,
+.text-resize-zone.zone-ne::after,
+.text-resize-zone.zone-sw::after,
+.text-resize-zone.zone-se::after,
+.right-rail,
+.ai-field select,
+.ai-field input,
+.ai-composer textarea,
+.thumb:hover,
+.print-dialog-preview,
+.print-preview-nav button:hover,
+.properties-card,
+.properties-secondary-btn:hover:not(:disabled),
+.properties-custom-table th,
+.save-changes-filename-field:focus-within,
+.setting-row input[type="checkbox"]::after,
+input.setting-switch::after,
+.settings-tab.active) {
+ background: var(--panel);
+}
+
+:root[data-theme="dark"] :is(.create-tab-button) {
+ border: 1px solid rgba(255, 255, 255, 0.12);
+ background: rgba(33, 33, 33, 0.62);
+}
+
+:root[data-theme="dark"] :is(button:hover:not(:disabled),
+.tab:hover,
+.toolbar-icon:hover:not(:disabled),
+.modifier-menu-row:hover:not(:disabled),
+.modifier-tool-button:hover:not(:disabled)) {
+ background: rgba(255, 255, 255, 0.045);
+}
+
+:root[data-theme="dark"] :is(.tab,
+.tool-option-row,
+.dialog-titlebar h2,
+.print-field,
+.print-fieldset legend,
+.print-radio,
+.print-check,
+.print-orient-label,
+.print-preview-meta,
+.print-preview-nav,
+.print-advanced-field,
+.convert-colors-lead,
+.properties-tab,
+.properties-grid > label,
+.properties-path) {
+ color: var(--text);
+}
+
+:root[data-theme="dark"] :is(.toolbar-icon,
+.modal-backdrop) {
+ background: rgba(33, 33, 33, 0.58);
+}
+
+:root[data-theme="dark"] :is(.save-button.just-saved,
+.convert-colors-profile-status[data-tone='ok']) {
+ color: #79d5a0;
+}
+
+:root[data-theme="dark"] :is(.topbar-right .toolbar-icon:hover:not(:disabled),
+.share-channel-icon--neutral,
+.share-link-settings-icon,
+.font-combo-option:hover,
+.recent-context-menu-item:hover:not([disabled]),
+.recent-context-menu-item:focus-visible,
+.history-row.current,
+.prepress-back:hover) {
+ background: rgba(255, 255, 255, 0.06);
+}
+
+:root[data-theme="dark"] :is(.topbar-right .toolbar-icon.filled:hover:not(:disabled),
+.setting-action-button:hover) {
+ background: var(--muted-panel);
+ border-color: rgba(255, 255, 255, 0.18);
+}
+
+:root[data-theme="dark"] :is(.share-popover,
+.recent-context-menu,
+.form-date-calendar) {
+ border: 1px solid rgba(255, 255, 255, 0.12);
+ background: rgba(33, 33, 33, 0.97);
+}
+
+:root[data-theme="dark"] :is(.share-invite-field input:focus) {
+ border-color: rgba(255, 255, 255, 0.22);
+ background: var(--panel);
+}
+
+:root[data-theme="dark"] :is(.share-channel-row:hover,
+.home-view-toggle,
+.create-source:hover:not(:disabled),
+.ai-msg.assistant .ai-bubble,
+.properties-tab:hover) {
+ background: rgba(255, 255, 255, 0.05);
+}
+
+:root[data-theme="dark"] :is(.share-info-banner,
+.modifier-icon-button.active,
+.modifier-menu-row.active,
+.modifier-tool-button.active,
+.modifier-link-button,
+.show-more,
+.forms-field-image,
+.print-fit-summary) {
+ color: #82bbf8;
+}
+
+:root[data-theme="dark"] :is(.tool-option-row input[type='text'],
+.tool-option-row input[type='password'],
+.tool-option-row input[type='number'],
+.tool-option-row select,
+.tool-option-row input[type='color'],
+.print-preview-nav button,
+.print-advanced-dialog) {
+ border: 1px solid rgba(255, 255, 255, 0.14);
+ background: var(--panel);
+}
+
+:root[data-theme="dark"] :is(.bookmark-row .bookmark-title,
+.bookmark-row .bookmark-page) {
+ border: 1px solid rgba(255, 255, 255, 0.14);
+}
+
+:root[data-theme="dark"] :is(.bookmark-remove) {
+ background: rgba(255, 255, 255, 0.05);
+ color: var(--muted);
+}
+
+:root[data-theme="dark"] :is(.bookmarks-add) {
+ border: 1px dashed rgba(255, 255, 255, 0.2);
+ color: var(--text);
+}
+
+:root[data-theme="dark"] :is(.bookmarks-add:hover,
+.create-close:hover,
+.create-pick:hover,
+.outline-item:hover,
+.history-row:hover:not(:disabled)) {
+ background: rgba(255, 255, 255, 0.04);
+}
+
+:root[data-theme="dark"] :is(.signature-transform-panel) {
+ border: 1px solid rgba(255, 255, 255, 0.12);
+ background: rgba(33, 33, 33, 0.68);
+}
+
+:root[data-theme="dark"] :is(.signature-rotation-controls input[type="number"],
+.empty-card,
+textarea,
+select,
+.setting-row input[type="color"],
+.setting-row input[type="text"],
+.setting-row input[type="email"],
+.setting-row input[type="password"],
+.setting-action-button,
+.status) {
+ background: rgba(33, 33, 33, 0.82);
+}
+
+:root[data-theme="dark"] :is(.format-font-warning) {
+ background: var(--accent-soft);
+ color: #f4d58a;
+}
+
+:root[data-theme="dark"] :is(.font-combo-option.selected,
+.history-row.current::before) {
+ color: var(--accent, #82bbf8);
+}
+
+:root[data-theme="dark"] :is(.modifier-actions button,
+.reader-toolbar) {
+ background: rgba(33, 33, 33, 0.74);
+}
+
+:root[data-theme="dark"] :is(.modifier-help,
+.edit-actions button,
+.edit-help,
+.annotation-actions button,
+.settings-footer button,
+.thumb,
+.save-changes-filename-field,
+.save-changes-actions button) {
+ background: rgba(33, 33, 33, 0.72);
+}
+
+:root[data-theme="dark"] :is(.selected-tool,
+.rail-button:hover:not(:disabled),
+.rail-button.active,
+.ai-action-desc code) {
+ background: rgba(255, 255, 255, 0.07);
+}
+
+:root[data-theme="dark"] :is(.page-controls span,
+.zoom-controls span) {
+ background: rgba(255, 255, 255, 0.055);
+}
+
+:root[data-theme="dark"] :is(.home-action:hover) {
+ background: rgba(255, 255, 255, 0.04);
+ border-color: rgba(255, 255, 255, 0.12);
+}
+
+:root[data-theme="dark"] :is(.home-dropzone) {
+ background: rgba(33, 33, 33, 0.55);
+}
+
+:root[data-theme="dark"] :is(.recent-card:hover) {
+ border-color: rgba(255, 255, 255, 0.12);
+}
+
+:root[data-theme="dark"] :is(.recent-context-menu-item.is-danger:hover:not([disabled]),
+.ai-msg.system .ai-bubble,
+.print-error,
+.convert-colors-profile-status[data-tone='error']) {
+ color: #ff8e86;
+}
+
+:root[data-theme="dark"] :is(.recent-card-thumb.placeholder,
+.create-preview) {
+ background: var(--panel);
+ color: var(--text);
+}
+
+:root[data-theme="dark"] :is(.profile-avatar) {
+ background: linear-gradient(135deg, var(--muted-panel), #6a6a66);
+}
+
+:root[data-theme="dark"] :is(.app-shell.editing .reader-toolbar) {
+ background: linear-gradient(90deg, var(--accent-soft), rgba(33, 33, 33, 0.78));
+}
+
+:root[data-theme="dark"] :is(.page-layout-toggle.active) {
+ background: var(--muted-panel);
+}
+
+:root[data-theme="dark"] :is(.ai-settings) {
+ background: rgba(33, 33, 33, 0.6);
+}
+
+:root[data-theme="dark"] :is(#highlight-button) {
+ background: var(--accent-soft);
+}
+
+:root[data-theme="dark"] :is(.result-button,
+.note-card,
+.page-summary) {
+ background: rgba(33, 33, 33, 0.72);
+ color: var(--text);
+}
+
+:root[data-theme="dark"] :is(.note-chip) {
+ border: 1px solid rgba(255, 255, 255, 0.12);
+ background: rgba(33, 33, 33, 0.9);
+ color: var(--text);
+}
+
+:root[data-theme="dark"] :is(.render-mask) {
+ background: rgba(33, 33, 33, 0.68);
+}
+
+:root[data-theme="dark"] :is(.settings-backdrop) {
+ background: rgba(33, 33, 33, 0.52);
+}
+
+:root[data-theme="dark"] :is(.settings-modal) {
+ background: rgba(33, 33, 33, 0.88);
+}
+
+:root[data-theme="dark"] :is(.save-changes-modal) {
+ background: rgba(33, 33, 33, 0.92);
+}
+
+:root[data-theme="dark"] :is(.thumb.active) {
+ background: var(--panel);
+ border-color: rgba(255, 255, 255, 0.28);
+}
+
+:root[data-theme="dark"] :is(.forms-field-input) {
+ background: var(--surface, var(--panel));
+ border: 1px solid var(--border, rgba(255, 255, 255, 0.12));
+}
+
+:root[data-theme="dark"] :is(.thumb.is-dragging) {
+ border-color: rgba(255, 255, 255, 0.28);
+ background: var(--panel);
+}
+
+:root[data-theme="dark"] :is(.print-dialog,
+.convert-colors-dialog,
+.properties-fonts-list,
+.properties-custom-table-wrap) {
+ border: 1px solid rgba(255, 255, 255, 0.12);
+ background: var(--panel);
+}
+
+:root[data-theme="dark"] :is(.print-field select,
+.print-field input[type='number'],
+.print-field input[type='text'],
+.print-radio-custom input[type='number'],
+.print-radio-custom input[type='text'],
+.convert-colors-field select,
+.properties-grid > input,
+.properties-grid > textarea) {
+ border: 1px solid rgba(255, 255, 255, 0.18);
+ background: var(--panel);
+}
+
+:root[data-theme="dark"] :is(.print-dialog-settings) {
+ border-right: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+:root[data-theme="dark"] :is(.print-fieldset) {
+ border: 1px solid rgba(255, 255, 255, 0.12);
+ background: rgba(33, 33, 33, 0.7);
+}
+
+:root[data-theme="dark"] :is(.print-size-tab) {
+ color: var(--muted);
+ background: rgba(255, 255, 255, 0.04);
+}
+
+:root[data-theme="dark"] :is(.print-size-tab.is-active) {
+ color: var(--text);
+ background: var(--panel);
+}
+
+:root[data-theme="dark"] :is(.print-check-label-fit) {
+ border-top: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+:root[data-theme="dark"] :is(.print-hint,
+.print-advanced-printer,
+.print-advanced-empty,
+.convert-colors-profile-status,
+.convert-colors-notes,
+.properties-fonts-list .font-meta,
+.properties-empty) {
+ color: var(--muted);
+}
+
+:root[data-theme="dark"] :is(.print-preview-frame) {
+ border: 1px solid rgba(255, 255, 255, 0.12);
+ background: linear-gradient(45deg, var(--panel) 25%, transparent 25%),
+		linear-gradient(-45deg, var(--panel) 25%, transparent 25%),
+		linear-gradient(45deg, transparent 75%, var(--panel) 75%),
+		linear-gradient(-45deg, transparent 75%, var(--panel) 75%);
+ background-color: var(--panel);
+}
+
+:root[data-theme="dark"] :is(.print-dialog-footer,
+.print-advanced-footer,
+.convert-colors-footer,
+.properties-dialog-footer) {
+ border-top: 1px solid rgba(255, 255, 255, 0.12);
+ background: var(--panel);
+}
+
+:root[data-theme="dark"] :is(.print-advanced-field select) {
+ border: 1px solid rgba(255, 255, 255, 0.22);
+ background: var(--panel);
+ color: var(--text);
+}
+
+:root[data-theme="dark"] :is(.properties-dialog) {
+ border: 1px solid rgba(255, 255, 255, 0.12);
+ background: var(--panel);
+ color: var(--text);
+}
+
+:root[data-theme="dark"] :is(.properties-tabs,
+.properties-fonts-list li,
+.properties-custom-table th,
+.properties-custom-table td) {
+ border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+:root[data-theme="dark"] :is(.properties-secondary-btn) {
+ border: 1px solid rgba(255, 255, 255, 0.16);
+ background: var(--panel);
+ color: var(--text);
+}
+
+:root[data-theme="dark"] :is(.recent-item) {
+ background: rgba(255, 255, 255, 0.02);
+}
+
+:root[data-theme="dark"] :is(.compare-controls) {
+ background: rgba(255, 255, 255, 0.015);
+}
+
+:root[data-theme="dark"] :is(.setting-row) {
+ background: rgba(33, 33, 33, 0.64);
+}
+
+:root[data-theme="dark"] :is(.setting-row input[type="checkbox"],
+input.setting-switch) {
+ border: 1px solid rgba(255, 255, 255, 0.12);
+ background: rgba(255, 255, 255, 0.12);
+}
+
+:root[data-theme="dark"] :is(.settings-tabs) {
+ background: rgba(255, 255, 255, 0.035);
+}
+
+
+/* Explicit contrast pairs for primary actions and badges. */
+:root[data-theme="dark"] :is(.filled, .toolbar-icon.filled, .topbar-right .toolbar-icon.filled,
+ .format-toggle.active, .form-date-calendar-day.is-selected, .ai-save-button,
+ .ai-send-button, .settings-footer button.filled, .save-changes-actions .filled) {
+ background: #ececec;
+ border-color: #ececec;
+ color: #171717;
+}
+:root[data-theme="dark"] :is(.filled, .toolbar-icon.filled, .topbar-right .toolbar-icon.filled):hover:not(:disabled) {
+ background: #fff;
+ border-color: #fff;
+ color: #171717;
+}
+:root[data-theme="dark"] .ai-msg.user .ai-bubble { background: #353535; color: #ececec; }
+:root[data-theme="dark"] .page-layout-toggle.active { background: #454545; color: #fff; }
+:root[data-theme="dark"] .setting-action-button:hover { background: #414141; color: #fff; }
+:root[data-theme="dark"] .app-shell.editing .reader-toolbar { background: #302322; }
+:root[data-theme="dark"] .canvas-stage { background: #141414; }
+:root[data-theme="dark"] .tab-strip { background: #171717; }
+:root[data-theme="dark"] .document-tab.active { background: #303030; }
+:root[data-theme="dark"] .sign-item-use { background: #fcfcfb; border-radius: 8px; }
+:root[data-theme="dark"] :is(input, textarea, select) { color: var(--text); }
+:root[data-theme="dark"] :is(input, textarea)::placeholder { color: #999da4; opacity: 1; }
+:root[data-theme="dark"] :is(button, input, select, textarea, a):focus-visible {
+ outline: 2px solid #9ccaff;
+ outline-offset: 3px;
+}
+/* Paper is a document surface, not an application panel. Never invert it. */
+:root[data-theme="dark"] :is(.page-wrapper, .compare-pane, .print-preview-frame canvas,
+ #signature-canvas, .signature-preview) { color-scheme: light; }
+:root[data-theme="dark"] .page-wrapper {
+ --text: #171717;
+ --muted: #6f7177;
+ --faint: #777;
+ --border: rgba(23,23,23,.12);
+ background: #fff;
+ color: #171717;
+}
+:root[data-theme="dark"] .page-wrapper .form-layer :is(input, textarea, select) { color: #111; color-scheme: light; }
+:root[data-theme="dark"] #signature-typed { color: #ececec; }
+:root[data-theme="dark"] .signature-preview { color: #0a3a8c; }
+:root[data-theme="dark"] .form-date-calendar { color-scheme: dark; --text: #ececec; --muted-panel: #303030; }
+
+:root[data-theme="dark"] :is(.setting-row input[type="checkbox"], input.setting-switch):checked {
+ background: #d8574e;
+ border-color: transparent;
+}
+:root[data-theme="dark"] .setting-row input[type="checkbox"]::after,
+:root[data-theme="dark"] input.setting-switch::after { background: #fff; }
+:root[data-theme="dark"] .settings-tab.active { background: #3b3b3b; color: #fff; }
+:root[data-theme="dark"] .modal-backdrop { background: rgba(0, 0, 0, .62); }
