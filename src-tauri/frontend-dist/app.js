@@ -1,3 +1,4 @@
+import { planPageSelection } from './page-selection.js';
 import { ru, pluralRu, localizeError } from './ru.js';
 import * as pdfjsLib from './vendor/pdf.min.mjs';
 import {
@@ -17749,6 +17750,103 @@ async function handleReorderPages(newOrder, focusPage) {
 	}
 }
 
+let splitContext = null;
+const splitUi = Object.fromEntries(['modal', 'backdrop', 'title', 'help', 'fields', 'mode', 'pages', 'summary', 'error', 'result', 'result-path', 'reveal', 'cancel', 'confirm', 'mode-label', 'pages-label'].map(key => [key, document.getElementById(`split-pdf-${key}`)]));
+
+function splitErrorText(error) {
+ return error?.key ? t(error.key, error.value) : localizeError(error);
+}
+function refreshSplitPreview() {
+ if (!splitContext || splitContext.busy || splitContext.result) return;
+ try {
+  const plan = planPageSelection(splitUi.pages.value, splitContext.pageCount, splitUi.mode.value);
+  splitUi.summary.textContent = t('splitPreview', plan.pages.length, plan.groups.length);
+  splitUi.error.textContent = '';
+  splitUi.confirm.disabled = false;
+  return plan;
+ } catch (error) {
+  splitUi.summary.textContent = '';
+  splitUi.error.textContent = splitErrorText(error);
+  splitUi.confirm.disabled = true;
+  return null;
+ }
+}
+function closeSplitPdf() {
+ if (splitContext?.busy) return;
+ const focus = splitContext?.focus;
+ splitContext = null;
+ splitUi.modal.classList.add('hidden'); splitUi.backdrop.classList.add('hidden');
+ if (focus?.isConnected) focus.focus();
+}
+function handleSplitPdf() {
+ if (!state.pdf || !state.fileBytes) { setStatus(t('needPdfOpen'), 'error'); return; }
+ if (splitContext) return;
+ splitContext = { tabId: state.activeTabId, pageCount: state.pdf.numPages, filename: state.fileName,
+  sourcePath: currentTab()?.filePath || null, focus: document.activeElement, busy: false, result: null };
+ splitUi.title.textContent = t('splitPdf');
+ splitUi.help.textContent = t('splitHelp', splitContext.pageCount);
+ splitUi['mode-label'].textContent = t('splitMode'); splitUi['pages-label'].textContent = t('pages');
+ for (const [value, key] of [['selected', 'splitSelected'], ['each', 'splitEach'], ['ranges', 'splitRanges']]) splitUi.mode.querySelector(`[value="${value}"]`).textContent = t(key);
+ splitUi.mode.value = 'selected'; splitUi.pages.value = splitContext.pageCount === 1 ? '1' : `1-${splitContext.pageCount}`;
+ splitUi.pages.placeholder = t('splitPlaceholder');
+ splitUi.cancel.textContent = t('cancel'); splitUi.confirm.textContent = t('splitSave'); splitUi.reveal.textContent = t('splitReveal');
+ splitUi.fields.classList.remove('hidden'); splitUi.result.classList.add('hidden'); splitUi.confirm.classList.remove('hidden');
+ splitUi.mode.disabled = splitUi.pages.disabled = splitUi.cancel.disabled = false;
+ splitUi.modal.classList.remove('hidden'); splitUi.backdrop.classList.remove('hidden');
+ refreshSplitPreview(); splitUi.pages.focus(); splitUi.pages.select();
+}
+async function submitSplitPdf() {
+ if (!splitContext || splitContext.busy || splitContext.result) return;
+ const plan = refreshSplitPreview(); if (!plan) return;
+ const context = splitContext;
+ const ensureSource = () => { if (state.activeTabId !== context.tabId || state.pdf?.numPages !== context.pageCount || (currentTab()?.filePath || null) !== context.sourcePath) throw new Error(t('splitDocumentChanged')); };
+ context.busy = true;
+ splitUi.mode.disabled = splitUi.pages.disabled = splitUi.cancel.disabled = splitUi.confirm.disabled = true;
+ splitUi.summary.textContent = t('splitPreparing');
+ try {
+  ensureSource();
+  if (state.nativeTextDirty) await syncNativeDocumentBytes({ render: false });
+  const bytes = await currentDocumentBytes();
+  ensureSource();
+  const result = await invokeCommand('split_pdf_dialog', { bytes, groups: plan.groups, filename: context.filename || 'Документ.pdf', sourcePath: context.sourcePath });
+  if (result) {
+   context.result = result;
+   splitUi.fields.classList.add('hidden'); splitUi.result.classList.remove('hidden'); splitUi.confirm.classList.add('hidden');
+   splitUi.summary.textContent = t('splitDone', result.paths.length);
+   splitUi['result-path'].textContent = result.directory || result.paths[0];
+   splitUi.cancel.textContent = t('done');
+  }
+ } catch (error) {
+  splitUi.error.textContent = splitErrorText(error);
+ } finally {
+  context.busy = false;
+  splitUi.mode.disabled = splitUi.pages.disabled = splitUi.cancel.disabled = false;
+  if (!context.result) {
+   if (!splitUi.error.textContent) refreshSplitPreview();
+   else { splitUi.summary.textContent = ''; splitUi.confirm.disabled = false; }
+  }
+ }
+}
+splitUi.pages.addEventListener('input', refreshSplitPreview);
+splitUi.mode.addEventListener('change', refreshSplitPreview);
+splitUi.cancel.addEventListener('click', closeSplitPdf);
+splitUi.backdrop.addEventListener('click', closeSplitPdf);
+splitUi.confirm.addEventListener('click', () => void submitSplitPdf());
+splitUi.reveal.addEventListener('click', () => {
+ const result = splitContext?.result;
+ if (result) void invokeCommand('reveal_file_in_folder', { path: result.directory || result.paths[0] }).catch(error => { splitUi.error.textContent = splitErrorText(error); });
+});
+splitUi.modal.addEventListener('keydown', event => {
+ if (event.key === 'Escape') { event.preventDefault(); event.stopPropagation(); closeSplitPdf(); }
+ if (event.key === 'Enter' && event.target === splitUi.pages) { event.preventDefault(); void submitSplitPdf(); }
+ if (event.key === 'Tab') {
+  const controls = [...splitUi.modal.querySelectorAll('input, select, button')].filter(e => !e.disabled && e.getClientRects().length);
+  const first = controls[0], last = controls.at(-1);
+  if (event.shiftKey && event.target === first) { event.preventDefault(); last?.focus(); }
+  else if (!event.shiftKey && event.target === last) { event.preventDefault(); first?.focus(); }
+ }
+});
+
 async function handleExtractCurrentPage() {
 	if (!state.fileBytes || !state.pdf) {
 		setStatus(t('needPdfOpen'), 'error');
@@ -19371,6 +19469,7 @@ function bindTauriMenuEvents() {
 	tauriListen('alto-convert-colors', () => void openConvertColorsModal());
 	tauriListen('alto-recent-files', () => handleShowRecent());
 	tauriListen('alto-combine-files', () => void handleCombineFiles());
+	tauriListen('alto-split-pdf', handleSplitPdf);
 	tauriListen('alto-compress-pdf', () => void handleCompressPdf());
 	tauriListen('alto-protect-pdf', () => void handleProtectPdf());
 	tauriListen('alto-delete-page', () => void handleDeleteCurrentPage());
@@ -21086,6 +21185,9 @@ document.querySelectorAll('[data-tool-action]').forEach((button) => {
 				break;
 			case 'ocr-page':
 				void runOcrForCurrentPage(true);
+				break;
+			case 'split-pdf':
+				handleSplitPdf();
 				break;
 			case 'combine':
 				void handleCombineFiles();

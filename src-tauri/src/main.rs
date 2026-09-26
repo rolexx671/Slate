@@ -18,6 +18,7 @@ use sofdocs_desktop::{
 // qu'à l'app Tauri, pas au sidecar `alto-mcp`.
 mod updater;
 mod appearance;
+mod pdf_split;
 
 // Impression depuis le Finder (Apple Event « print documents »). Spécifique macOS :
 // Tauri ne forwarde QUE l'event « open », pas « print ». On installe donc notre
@@ -2272,6 +2273,7 @@ fn main() {
                 .item(&recent_menu)
                 .item(&create_menu)
                 .text("combine-files", "Объединить файлы")
+                .text("split-pdf", "Разделить PDF…")
                 .separator()
                 .text("save-copy", "Сохранить")
                 .text("save-as", "Сохранить как…")
@@ -2481,6 +2483,7 @@ fn main() {
                 "document-properties" => Some("alto-document-properties"),
                 "recent-files" => Some("alto-recent-files"),
                 "combine-files" => Some("alto-combine-files"),
+                "split-pdf" => Some("alto-split-pdf"),
                 "compress-pdf" => Some("alto-compress-pdf"),
                 "protect-pdf" => Some("alto-protect-pdf"),
                 "delete-page" => Some("alto-delete-page"),
@@ -2518,6 +2521,7 @@ fn main() {
         })
         .invoke_handler(tauri::generate_handler![
             appearance::set_native_theme,
+            pdf_split::split_pdf_dialog,
             analyze_pdf_page,
             cache_document,
             analyze_pdf_page_cached,

@@ -157,7 +157,10 @@
 						<span class="tool-icon" data-icon="merge"></span>
 						<span>Объединить файлы</span>
 					</button>
-					<button class="tool-row" type="button" data-open-panel="pages" data-label-key="organizePages">
+					<button class="tool-row" type="button" data-tool-action="split-pdf" data-label-key="splitPdf">
+                        <span class="tool-icon" data-icon="pages"></span><span>Разделить PDF</span>
+                    </button>
+                    <button class="tool-row" type="button" data-open-panel="pages" data-label-key="organizePages">
 						<span class="tool-icon" data-icon="pages"></span>
 						<span>Упорядочить страницы</span>
 					</button>
@@ -443,7 +446,8 @@
 							<span class="tool-icon" data-icon="merge"></span>
 							<span>Объединить файлы</span>
 						</button>
-						<button class="modifier-menu-row" type="button" data-tool-disabled="Удаление конфиденциальных данных пока недоступно">
+						<button class="modifier-menu-row" type="button" data-tool-action="split-pdf"><span class="tool-icon" data-icon="pages"></span><span>Разделить PDF</span></button>
+                        <button class="modifier-menu-row" type="button" data-tool-disabled="Удаление конфиденциальных данных пока недоступно">
 							<span class="tool-icon" data-icon="redact"></span>
 							<span>Удалить конфиденциальные данные</span>
 						</button>
@@ -730,7 +734,25 @@
 				</footer>
 			</section>
 
-			<div class="modal-backdrop hidden" id="tool-options-backdrop"></div>
+			<div class="modal-backdrop hidden" id="split-pdf-backdrop"></div>
+            <section class="save-changes-modal split-pdf-modal hidden" id="split-pdf-modal" role="dialog" aria-modal="true" aria-labelledby="split-pdf-title">
+                <p class="eyebrow">Slate RU</p><h2 id="split-pdf-title">Разделить PDF</h2>
+                <p id="split-pdf-help"></p>
+                <div id="split-pdf-fields">
+                    <label class="split-pdf-field"><span id="split-pdf-mode-label">Как разделить</span>
+                        <select id="split-pdf-mode"><option value="selected">Выбранные страницы в один PDF</option><option value="each">Каждую страницу в отдельный PDF</option><option value="ranges">Каждый диапазон в отдельный PDF</option></select>
+                    </label>
+                    <label class="split-pdf-field"><span id="split-pdf-pages-label">Страницы</span>
+                        <input id="split-pdf-pages" type="text" maxlength="10000" placeholder="Например: 1-3, 5, 7-10" autocomplete="off" spellcheck="false" aria-describedby="split-pdf-summary split-pdf-error" />
+                    </label>
+                </div>
+                <p id="split-pdf-summary" role="status" aria-live="polite"></p>
+                <p class="protect-error" id="split-pdf-error" role="alert"></p>
+                <div id="split-pdf-result" class="hidden"><p id="split-pdf-result-path"></p><button id="split-pdf-reveal" type="button">Показать в Finder</button></div>
+                <footer class="save-changes-actions"><button id="split-pdf-cancel" type="button">Отмена</button><button id="split-pdf-confirm" class="filled" type="button">Сохранить…</button></footer>
+            </section>
+
+            <div class="modal-backdrop hidden" id="tool-options-backdrop"></div>
 			<section class="save-changes-modal hidden" id="tool-options-modal" role="dialog" aria-modal="true" aria-labelledby="tool-options-title">
 				<p class="eyebrow">Slate RU</p>
 				<h2 id="tool-options-title">Параметры</h2>

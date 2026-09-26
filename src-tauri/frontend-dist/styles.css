@@ -6377,3 +6377,11 @@ input.setting-switch:checked::after {
  .top-search input { width: 100%; }
  .tools-resize-handle { top: 122px; height: calc(100vh - 122px); }
 }
+
+/* Split dialog uses the active theme and the SF Pro UI scale. */
+.split-pdf-modal { width: min(560px, calc(100vw - 40px)); max-height: calc(100vh - 40px); overflow-y: auto; }
+.split-pdf-field { display: grid; gap: 8px; margin-top: 18px; font-size: 13px; }
+.split-pdf-field :is(input, select) { width: 100%; min-width: 0; padding: 10px 12px; border: 1px solid var(--border-strong); border-radius: 10px; background: var(--panel); color: var(--text); font-size: 14px; }
+#split-pdf-error { color: var(--accent); }
+#split-pdf-result-path { overflow-wrap: anywhere; user-select: text; }
+#split-pdf-reveal { margin-top: 12px; padding: 8px 12px; border: 1px solid var(--border); background: var(--muted-panel); font-size: 14px; }

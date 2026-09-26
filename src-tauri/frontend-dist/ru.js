@@ -606,3 +606,18 @@ export function localizeError(error) {
 }
 
 Object.assign(ru, { themeLabel: "Тема оформления", themeDescription: "Выберите светлую, тёмную тему или оформление macOS.", theme_dark: "Тёмная", theme_light: "Светлая", theme_system: "Как в macOS" });
+
+Object.assign(ru, {
+ splitPdf: 'Разделить PDF', splitMode: 'Как разделить',
+ splitSelected: 'Выбранные страницы в один PDF', splitEach: 'Каждую страницу в отдельный PDF', splitRanges: 'Каждый диапазон в отдельный PDF',
+ splitPlaceholder: 'Например: 1-3, 5, 7-10', splitSave: 'Сохранить…', splitReveal: 'Показать в Finder',
+ splitHelp: count => `В документе ${count} ${pluralRu(count, 'страница', 'страницы', 'страниц')}. Укажите номера или диапазоны через запятую, например: 1-3, 5. Нумерация начинается с первой страницы файла. Исходный PDF не изменяется.`,
+ splitPreview: (pages, files) => `Выбрано страниц: ${pages}. Будет создано PDF-файлов: ${files}. Порядок страниц внутри каждого файла сохраняется. Для нескольких файлов создаётся новая папка.`,
+ splitEmpty: 'Укажите страницы для сохранения.', splitNoPages: 'В документе нет страниц.', splitInvalidMode: 'Выберите способ разделения.',
+ splitInvalidRange: value => `Не удалось разобрать «${value}». Используйте номера и диапазоны, например: 1-3, 5.`,
+ splitOutOfBounds: count => `Допустимы номера страниц от 1 до ${count}.`,
+ splitReverseRange: value => `В диапазоне «${value}» первый номер должен быть не больше последнего.`,
+ splitTooLong: 'Список страниц слишком длинный. Разделите его на несколько операций.',
+ splitPreparing: 'Подготовка PDF и выбор места сохранения…', splitDone: count => `Готово. Сохранено PDF-файлов: ${count}.`,
+ splitDocumentChanged: 'Активный документ изменился. Закройте это окно и снова выберите «Разделить PDF».'
+});
