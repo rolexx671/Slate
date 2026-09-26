@@ -21,12 +21,29 @@ fn create_pdfium() -> Option<Pdfium> {
     for dir in pdfium_search_dirs() {
         let lib = Pdfium::pdfium_platform_library_name_at_path(&dir);
         if lib.exists() {
+            #[cfg(target_os = "macos")]
+            if !trusted_macos_pdfium(&lib) { continue; }
             if let Ok(bindings) = Pdfium::bind_to_library(&lib) {
                 return Some(Pdfium::new(bindings));
             }
         }
     }
-    Pdfium::bind_to_system_library().map(Pdfium::new).ok()
+    // The local macOS build only loads the pinned library verified above.
+    #[cfg(target_os = "macos")]
+    { None }
+    #[cfg(not(target_os = "macos"))]
+    { Pdfium::bind_to_system_library().map(Pdfium::new).ok() }
+}
+
+#[cfg(target_os = "macos")]
+fn trusted_macos_pdfium(path: &std::path::Path) -> bool {
+    use sha2::{Digest, Sha256};
+    // PDFium chromium/7891 mac-arm64; kept in sync with scripts/build-ru.sh.
+    const EXPECTED: &str = "f71102b96ff0c56728b3eaa9a26beab9fec3fb0c2e73319c0f3bfe2f32222948";
+    match std::fs::read(path) {
+        Ok(bytes) if format!("{:x}", Sha256::digest(&bytes)) == EXPECTED => true,
+        _ => { tracing::error!("PDFium library checksum mismatch: {}", path.display()); false }
+    }
 }
 
 /// Verrouille l'instance PDFium partagée (liée une seule fois, à la demande).
@@ -4618,5 +4635,20 @@ mod tests {
         assert_eq!(detect_field_kind("TVA 20%", "invoice"), Some("tax"));
         assert_eq!(detect_field_kind("IBAN FR76 3000 6000 0112 3456 7890 189", "invoice"), Some("iban"));
         assert!(is_critical_field("iban"));
+    }
+}
+
+#[cfg(all(test, target_os = "macos"))]
+mod pinned_pdfium_integrity_tests {
+    use super::trusted_macos_pdfium;
+    #[test]
+    fn accepts_pinned_library_and_rejects_other_bytes() {
+        let dir = std::env::var("ALTO_PDFIUM_DIR").expect("Set ALTO_PDFIUM_DIR to the pinned PDFium library directory");
+        assert!(trusted_macos_pdfium(&std::path::Path::new(&dir).join("libpdfium.dylib")));
+        let path = std::env::temp_dir().join(format!("slate-untrusted-library-{}", std::process::id()));
+        std::fs::write(&path, b"not the bundled PDFium library").unwrap();
+        assert!(!trusted_macos_pdfium(&path));
+        std::fs::remove_file(&path).unwrap();
+        assert!(!trusted_macos_pdfium(&path));
     }
 }

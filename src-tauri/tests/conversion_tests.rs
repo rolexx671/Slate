@@ -54,3 +54,13 @@ fn saving_cannot_overwrite_the_source() {
  assert!(conversion::write_atomic(b"changed",&source,Some(&source)).is_err());assert_eq!(fs::read(&source).unwrap(),b"original");
  let output=dir.join("copy.png");conversion::write_atomic(b"converted",&output,Some(&source)).unwrap();assert_eq!(fs::read(output).unwrap(),b"converted");fs::remove_dir_all(dir).unwrap();
 }
+
+#[test]
+fn local_fixture_conversion_when_requested() {
+ let Ok(path)=std::env::var("SLATE_CONVERSION_FIXTURE") else { return; };
+ let bytes=fs::read(&path).unwrap();
+ let image=conversion::render_image(&bytes,1,150).expect("render local fixture");
+ let png=encode_picture(&image,Format::Png,90,Some(150)).expect("encode local fixture");
+ assert_eq!(image::guess_format(&png).unwrap(),ImageFormat::Png);
+ eprintln!("Fixture converted: {}x{}, {} bytes",image.width(),image.height(),png.len());
+}
