@@ -1,0 +1,94 @@
+/* SF Pro UI scale, selected in the font comparison. This file styles application
+   chrome only: document text, PDF widgets and signature previews are excluded. */
+:root {
+ --ui-size: 14px;
+ --ui-small: 12px;
+ --ui-label: 13px;
+ --ui-heading: 15px;
+ font-optical-sizing: auto;
+}
+
+.tool-row, .toolbar-icon, .tab, .home-action, .modifier-menu-row,
+.modifier-tool-button, .settings-tab, .setting-action-button,
+.create-tab-button, .create-pick, .create-primary,
+.signature-tab, .signature-font-button, .sign-create-button,
+.ai-save-button, .ai-send-button, .ai-apply-button, .ai-skip-button,
+.ai-apply-all, .outline-item, .history-row, .show-more,
+:where(.settings-footer, .save-changes-actions, .signature-modal,
+ .tool-options-modal, .compare-controls, .print-dialog-footer,
+ .print-advanced-footer, .properties-dialog-footer, .annotation-actions,
+ .edit-actions, .convert-colors-dialog) button {
+ font-size: var(--ui-size);
+ font-weight: 500;
+ letter-spacing: 0;
+}
+
+.document-tab, .document-tab-title, .brand {
+ font-size: var(--ui-label);
+ font-weight: 500;
+ letter-spacing: 0;
+}
+
+.panel-heading strong, .home-recents-title, .prepress-heading strong,
+.side-drawer header h2, .dialog-titlebar h2 {
+ font-size: var(--ui-heading);
+ font-weight: 600;
+ letter-spacing: 0;
+}
+
+.home-title {
+ font-size: 40px;
+ font-weight: 600;
+ letter-spacing: -0.02em;
+ line-height: 1.15;
+}
+.home-sub, .home-dropzone {
+ font-size: 16px;
+ font-weight: 400;
+ letter-spacing: 0;
+ line-height: 1.55;
+}
+
+.top-search input, .recent-card-name,
+.setting-row :is(select, input[type="text"], input[type="email"], input[type="password"]),
+.ai-field :is(input, select), .ai-composer textarea, .forms-field-input,
+:where(.side-drawer, .settings-modal, .save-changes-modal, .tool-options-modal,
+ .print-dialog, .print-advanced-dialog, .properties-dialog, .convert-colors-dialog)
+ :is(input[type="text"], input[type="number"], input[type="password"], select, textarea) {
+ font-size: var(--ui-size);
+ font-weight: 400;
+ letter-spacing: 0;
+}
+.recent-card-name { font-weight: 500; }
+
+.setting-row strong, .tool-option-row, .print-field, .print-radio,
+.print-check, .print-advanced-field, .properties-grid > label,
+.edit-field, .modifier-edit-field, .forms-field-label {
+ font-size: var(--ui-label);
+ font-weight: 500;
+ letter-spacing: 0;
+}
+.setting-row small, .edit-help, .sign-intro, .sign-hint, .ai-field,
+.ai-action-desc, .print-hint, .compare-name, .properties-help,
+:where(.settings-modal, .save-changes-modal, .tool-options-modal,
+ .signature-modal, .properties-dialog, .convert-colors-dialog) p:not(.eyebrow) {
+ font-size: var(--ui-label);
+ font-weight: 400;
+ letter-spacing: 0;
+ line-height: 1.45;
+}
+
+.recent-card-meta, .recent-item span, .panel-note span, .document-meta,
+.page-summary span, .history-row-time, .status, .save-changes-filename-ext {
+ font-size: var(--ui-small);
+ font-weight: 400;
+ letter-spacing: 0;
+}
+.panel-note strong { font-size: var(--ui-small); font-weight: 600; letter-spacing: 0; }
+
+/* Keep the document rendering inheritance exactly as before the UI change. */
+.page-wrapper, .signature-preview, #signature-canvas {
+ text-rendering: geometricPrecision;
+ font-family: "SF Pro Text", "SF Pro Display", -apple-system,
+  BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif;
+}
