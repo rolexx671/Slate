@@ -6365,3 +6365,17 @@ input.setting-switch:checked::after {
 	background: var(--accent, #d2261c);
 	transition: width 0.2s ease;
 }
+
+/* Russian labels need two toolbar rows on laptop-sized windows. */
+@media (min-width: 701px) and (max-width: 1700px) {
+ .app-shell { grid-template-rows: 38px 84px minmax(0, 1fr); }
+ .topbar { flex-direction: column; align-items: stretch; gap: 0; }
+ .topbar-left, .topbar-right { min-height: 42px; width: 100%; flex: 0 0 42px; }
+ .topbar-right { border-top: 1px solid var(--border); overflow-x: auto; }
+ .top-tabs { mask-image: none; }
+ .top-tabs [data-tool-disabled], #ai-tab { display: inline-flex; }
+ .brand > span:not(.brand-mark) { display: inline; }
+ .top-search { display: flex; flex: 1 0 210px; }
+ .top-search input { width: 100%; }
+ .tools-resize-handle { top: 122px; height: calc(100vh - 122px); }
+}

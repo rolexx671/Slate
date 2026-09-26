@@ -4884,7 +4884,7 @@ dependencies = [
 
 [[package]]
 name = "sofdocs-desktop"
-version = "0.3.130"
+version = "0.3.138-ru.1"
 dependencies = [
  "alto-pdf-engine",
  "core-foundation 0.10.1",

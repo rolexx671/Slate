@@ -291,7 +291,7 @@ fn spawn_detached_window(
 #[tauri::command]
 fn spawn_empty_window(app: tauri::AppHandle) -> Result<String, String> {
     let label = next_window_label();
-    spawn_slate_window(&app, &label, "Slate", None, None)?;
+    spawn_slate_window(&app, &label, "Slate RU", None, None)?;
     Ok(label)
 }
 
@@ -384,7 +384,7 @@ fn claim_tab_drag(
 }
 
 fn tab_drag_temp_root() -> std::path::PathBuf {
-    std::env::temp_dir().join("slate-tab-drag")
+    std::env::temp_dir().join("slate-ru-tab-drag")
 }
 
 fn sanitize_drag_file_name(name: &str) -> String {
@@ -1313,7 +1313,7 @@ fn handler_id_is_slate(id: &str) -> bool {
     if id.is_empty() {
         return false;
     }
-    if id.contains("soflution.slate") {
+    if id.contains("com.rolexx671.slate.ru") {
         return true;
     }
     let file_name = id.rsplit(['\\', '/']).next().unwrap_or(&id);
@@ -1321,7 +1321,7 @@ fn handler_id_is_slate(id: &str) -> bool {
         .strip_suffix(".desktop")
         .or_else(|| file_name.strip_suffix(".exe"))
         .unwrap_or(file_name);
-    stem == "slate" || stem == "com.soflution.slate"
+    stem == "slate" || stem == "com.rolexx671.slate.ru"
 }
 
 #[cfg(target_os = "macos")]
@@ -1363,7 +1363,7 @@ fn macos_set_role_handler(uti: &str, role: u32) -> i32 {
     }
 
     let content_type = CFString::new(uti);
-    let bundle_id = CFString::new("com.soflution.slate");
+    let bundle_id = CFString::new("com.rolexx671.slate.ru");
     unsafe {
         LSSetDefaultRoleHandlerForContentType(
             content_type.as_concrete_TypeRef(),
@@ -1434,7 +1434,7 @@ fn set_default_pdf_handler() -> Result<(), String> {
     #[cfg(target_os = "linux")]
     {
         let desktop_names = [
-            "com.soflution.slate.desktop",
+            "com.rolexx671.slate.ru.desktop",
             "slate.desktop",
             "Slate.desktop",
         ];
@@ -1570,25 +1570,25 @@ fn dialog_ui_is_french() -> bool {
 
 fn dialog_filter_pdf() -> &'static str {
     if dialog_ui_is_french() {
-        "Documents PDF"
+        "Документы PDF"
     } else {
-        "PDF Documents"
+        "Документы PDF"
     }
 }
 
 fn dialog_filter_images() -> &'static str {
     if dialog_ui_is_french() {
-        "Images"
+        "Изображения"
     } else {
-        "Images"
+        "Изображения"
     }
 }
 
 fn dialog_filter_certificates() -> &'static str {
     if dialog_ui_is_french() {
-        "Certificats (.p12, .pfx)"
+        "Сертификаты (.p12, .pfx)"
     } else {
-        "Certificates (.p12, .pfx)"
+        "Сертификаты (.p12, .pfx)"
     }
 }
 
@@ -1597,16 +1597,16 @@ fn dialog_filter_for_extension(extension: &str) -> &'static str {
         "pdf" => dialog_filter_pdf(),
         "json" => {
             if dialog_ui_is_french() {
-                "Fichiers JSON"
+                "Файлы JSON"
             } else {
-                "JSON Files"
+                "Файлы JSON"
             }
         }
         _ => {
             if dialog_ui_is_french() {
-                "Fichiers"
+                "Файлы"
             } else {
-                "Files"
+                "Файлы"
             }
         }
     }
@@ -1936,7 +1936,7 @@ fn prepare_share_pdf(data: Vec<u8>, filename: String) -> Result<String, String> 
     if data.is_empty() {
         return Err("empty_document".to_string());
     }
-    let dir = std::env::temp_dir().join("slate-share");
+    let dir = std::env::temp_dir().join("slate-ru-share");
     std::fs::create_dir_all(&dir).map_err(|e| e.to_string())?;
     let mut safe: String = filename
         .chars()
@@ -2166,7 +2166,7 @@ fn main() {
     tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_fs::init())
-        .plugin(tauri_plugin_updater::Builder::new().build())
+
         .manage(PendingOpens::default())
         .manage(PendingPrints::default())
         .manage(PendingDetachedTabs::default())
@@ -2198,35 +2198,35 @@ fn main() {
                 }
             }
 
-            let about = MenuItemBuilder::new("À propos de Slate")
+            let about = MenuItemBuilder::new("О программе Slate RU")
                 .id("about")
                 .build(app)?;
-            let plugins = MenuItemBuilder::new("À propos des modules externes Slate...")
+            let plugins = MenuItemBuilder::new("О внешних модулях Slate RU…")
                 .id("about-plugins")
                 .build(app)?;
-            let settings = MenuItemBuilder::new("Préférences...")
+            let settings = MenuItemBuilder::new("Настройки…")
                 .id("settings")
                 .accelerator("CmdOrCtrl+,")
                 .build(app)?;
             let accessibility =
-                MenuItemBuilder::new("Assistant de configuration d’accessibilité...")
+                MenuItemBuilder::new("Настройка универсального доступа…")
                     .id("accessibility-setup")
                     .build(app)?;
             let separator = PredefinedMenuItem::separator(app)?;
-            let services = SubmenuBuilder::new(app, "Services")
-                .text("unsupported-services", "Aucun service disponible")
+            let services = SubmenuBuilder::new(app, "Службы")
+                .text("unsupported-services", "Нет доступных служб")
                 .build()?;
-            let hide = PredefinedMenuItem::hide(app, Some("Masquer Slate"))?;
-            let hide_others = PredefinedMenuItem::hide_others(app, Some("Masquer les autres"))?;
-            let show_all = PredefinedMenuItem::show_all(app, Some("Afficher tout"))?;
+            let hide = PredefinedMenuItem::hide(app, Some("Скрыть Slate RU"))?;
+            let hide_others = PredefinedMenuItem::hide_others(app, Some("Скрыть остальные"))?;
+            let show_all = PredefinedMenuItem::show_all(app, Some("Показать все"))?;
             // Quitter via le frontend (et non PredefinedMenuItem::quit, qui
             // termine le process immédiatement) : la page vérifie les
             // modifications non enregistrées et propose de les sauvegarder.
-            let quit = MenuItemBuilder::new("Quitter Slate")
+            let quit = MenuItemBuilder::new("Завершить Slate RU")
                 .id("request-quit")
                 .accelerator("CmdOrCtrl+Q")
                 .build(app)?;
-            let app_menu = SubmenuBuilder::new(app, "Slate")
+            let app_menu = SubmenuBuilder::new(app, "Slate RU")
                 .item(&about)
                 .item(&plugins)
                 .item(&separator)
@@ -2242,132 +2242,132 @@ fn main() {
                 .item(&quit)
                 .build()?;
 
-            let recent_menu = SubmenuBuilder::new(app, "Ouvrir les fichiers récents")
-                .text("recent-files", "Tous les fichiers récents...")
+            let recent_menu = SubmenuBuilder::new(app, "Открыть недавние")
+                .text("recent-files", "Все недавние файлы…")
                 .build()?;
-            let create_menu = SubmenuBuilder::new(app, "Créer")
-                .text("unsupported-create-pdf", "Créer un PDF")
-                .text("unsupported-create-blank", "Créer une page vierge")
+            let create_menu = SubmenuBuilder::new(app, "Создать")
+                .text("unsupported-create-pdf", "Создать PDF")
+                .text("unsupported-create-blank", "Создать пустую страницу")
                 .build()?;
-            let save_as_other_menu = SubmenuBuilder::new(app, "Enregistrer sous un autre")
-                .text("export-edited-pdf", "PDF modifié")
-                .text("export-notes", "Notes JSON")
+            let save_as_other_menu = SubmenuBuilder::new(app, "Сохранить в другом формате")
+                .text("export-edited-pdf", "Изменённый PDF")
+                .text("export-notes", "Заметки JSON")
                 .build()?;
-            let export_menu = SubmenuBuilder::new(app, "Exporter un PDF")
-                .text("export-edited-pdf", "PDF modifié...")
+            let export_menu = SubmenuBuilder::new(app, "Экспорт PDF")
+                .text("export-edited-pdf", "Изменённый PDF…")
                 .text("unsupported-export-word", "Microsoft Word")
-                .text("unsupported-export-image", "Image")
+                .text("unsupported-export-image", "Изображение")
                 .build()?;
             // Item « Imprimer » avec raccourci natif ⌘P : macOS route alors Cmd+P
             // vers le menu (→ alto-print → impression du PDF) au lieu de laisser le
             // WebView ouvrir sa propre impression (qui imprimerait l'UI de l'app).
-            let print_item = MenuItemBuilder::new("Imprimer...")
+            let print_item = MenuItemBuilder::new("Печать…")
                 .id("print")
                 .accelerator("CmdOrCtrl+P")
                 .build(app)?;
-            let file_menu = SubmenuBuilder::new(app, "Fichier")
-                .text("open-pdf", "Ouvrir...")
+            let file_menu = SubmenuBuilder::new(app, "Файл")
+                .text("open-pdf", "Открыть…")
                 .item(&recent_menu)
                 .item(&create_menu)
-                .text("combine-files", "Combiner les fichiers")
+                .text("combine-files", "Объединить файлы")
                 .separator()
-                .text("save-copy", "Enregistrer")
-                .text("save-as", "Enregistrer sous...")
+                .text("save-copy", "Сохранить")
+                .text("save-as", "Сохранить как…")
                 .item(&save_as_other_menu)
-                .text("compress-pdf", "Compresser un fichier PDF")
+                .text("compress-pdf", "Сжать PDF")
                 .item(&export_menu)
-                .text("protect-pdf", "Protéger à l’aide d’un mot de passe")
+                .text("protect-pdf", "Защитить паролем")
                 .separator()
                 .text(
                     "unsupported-signatures",
-                    "Demander des signatures électroniques",
+                    "Запросить электронные подписи",
                 )
-                .text("share-pdf", "Partager le fichier")
+                .text("share-pdf", "Поделиться файлом")
                 .separator()
                 .item(&print_item)
-                .text("focus-search", "Rechercher")
-                .text("unsupported-advanced-search", "Recherche avancée")
+                .text("focus-search", "Поиск")
+                .text("unsupported-advanced-search", "Расширенный поиск")
                 .separator()
-                .text("document-properties", "Propriétés du document...")
+                .text("document-properties", "Свойства документа…")
                 .separator()
-                .text("close-file", "Fermer le fichier")
+                .text("close-file", "Закрыть файл")
                 .build()?;
 
-            let undo_item = MenuItemBuilder::new("Annuler  ⌘Z").id("undo").build(app)?;
-            let redo_item = MenuItemBuilder::new("Rétablir  ⌘Y").id("redo").build(app)?;
-            let undo_menu = SubmenuBuilder::new(app, "Annuler, rétablir et plus encore")
+            let undo_item = MenuItemBuilder::new("Отменить  ⌘Z").id("undo").build(app)?;
+            let redo_item = MenuItemBuilder::new("Повторить  ⌘Y").id("redo").build(app)?;
+            let undo_menu = SubmenuBuilder::new(app, "Отмена и повтор действий")
                 .item(&undo_item)
                 .item(&redo_item)
                 .build()?;
-            let add_image_menu = SubmenuBuilder::new(app, "Ajouter une image")
-                .text("add-image-file", "Depuis un fichier...")
+            let add_image_menu = SubmenuBuilder::new(app, "Добавить изображение")
+                .text("add-image-file", "Из файла…")
                 .build()?;
-            let protection_menu = SubmenuBuilder::new(app, "Protection")
-                .text("protect-pdf", "Ajouter un mot de passe")
-                .text("unsupported-redact", "Biffer un PDF")
+            let protection_menu = SubmenuBuilder::new(app, "Защита")
+                .text("protect-pdf", "Добавить пароль")
+                .text("unsupported-redact", "Удалить конфиденциальные данные")
                 .build()?;
-            let cut_item = PredefinedMenuItem::cut(app, Some("Couper"))?;
-            let copy_item = PredefinedMenuItem::copy(app, Some("Copier"))?;
-            let paste_item = PredefinedMenuItem::paste(app, Some("Coller"))?;
-            let select_all_item = PredefinedMenuItem::select_all(app, Some("Tout sélectionner"))?;
-            let edit_menu = SubmenuBuilder::new(app, "Édition")
+            let cut_item = PredefinedMenuItem::cut(app, Some("Вырезать"))?;
+            let copy_item = PredefinedMenuItem::copy(app, Some("Скопировать"))?;
+            let paste_item = PredefinedMenuItem::paste(app, Some("Вставить"))?;
+            let select_all_item = PredefinedMenuItem::select_all(app, Some("Выбрать всё"))?;
+            let edit_menu = SubmenuBuilder::new(app, "Правка")
                 .item(&cut_item)
                 .item(&copy_item)
                 .item(&paste_item)
                 .item(&select_all_item)
                 .item(&undo_menu)
                 .separator()
-                .text("modify-pdf", "Modifier le PDF")
-                .text("add-text", "Ajouter du texte")
+                .text("modify-pdf", "Редактировать PDF")
+                .text("add-text", "Добавить текст")
                 .item(&add_image_menu)
-                .text("add-signature", "Ajouter une signature")
+                .text("add-signature", "Добавить подпись")
                 .separator()
-                .text("delete-page", "Supprimer la page")
-                .text("rotate-page-cw", "Faire pivoter la page (horaire)")
-                .text("rotate-page-ccw", "Faire pivoter la page (antihoraire)")
-                .text("organize-pages", "Organiser les pages")
+                .text("delete-page", "Удалить страницу")
+                .text("rotate-page-cw", "Повернуть страницу по часовой стрелке")
+                .text("rotate-page-ccw", "Повернуть страницу против часовой стрелки")
+                .text("organize-pages", "Упорядочить страницы")
                 .separator()
-                .text("unsupported-redact", "Biffer un PDF")
-                .text("ocr-page", "Scan et OCR")
-                .text("unsupported-form", "Préparer le formulaire")
+                .text("unsupported-redact", "Удалить конфиденциальные данные")
+                .text("ocr-page", "Сканирование и распознавание текста")
+                .text("unsupported-form", "Подготовить форму")
                 .item(&protection_menu)
                 .separator()
-                .text("unsupported-special-chars", "Caractères spéciaux...")
+                .text("unsupported-special-chars", "Специальные символы…")
                 .build()?;
 
-            let rotate_view_menu = SubmenuBuilder::new(app, "Faire pivoter la vue")
-                .text("unsupported-rotate-clockwise", "Horaire")
-                .text("unsupported-rotate-counter", "Antihoraire")
+            let rotate_view_menu = SubmenuBuilder::new(app, "Повернуть вид")
+                .text("unsupported-rotate-clockwise", "По часовой стрелке")
+                .text("unsupported-rotate-counter", "Против часовой стрелки")
                 .build()?;
-            let page_navigation_menu = SubmenuBuilder::new(app, "Navigation de pages")
-                .text("prev-page", "Page précédente")
-                .text("next-page", "Page suivante")
+            let page_navigation_menu = SubmenuBuilder::new(app, "Навигация по страницам")
+                .text("prev-page", "Предыдущая страница")
+                .text("next-page", "Следующая страница")
                 .build()?;
-            let display_menu = SubmenuBuilder::new(app, "Affichage")
-                .text("toggle-tools", "Tous les outils")
-                .text("unsupported-sidebar", "Panneaux latéraux")
+            let display_menu = SubmenuBuilder::new(app, "Вид")
+                .text("toggle-tools", "Все инструменты")
+                .text("unsupported-sidebar", "Боковые панели")
                 .build()?;
-            let zoom_menu = SubmenuBuilder::new(app, "Zoom")
-                .text("fit-width", "Largeur page")
-                .text("zoom-in", "Zoom avant")
-                .text("zoom-out", "Zoom arrière")
+            let zoom_menu = SubmenuBuilder::new(app, "Масштаб")
+                .text("fit-width", "По ширине страницы")
+                .text("zoom-in", "Увеличить")
+                .text("zoom-out", "Уменьшить")
                 .build()?;
-            let show_hide_menu = SubmenuBuilder::new(app, "Afficher/Masquer")
-                .text("toggle-tools", "Tous les outils")
-                .text("unsupported-right-rail", "Barre d’outils droite")
+            let show_hide_menu = SubmenuBuilder::new(app, "Показать / скрыть")
+                .text("toggle-tools", "Все инструменты")
+                .text("unsupported-right-rail", "Правая панель инструментов")
                 .build()?;
-            let theme_menu = SubmenuBuilder::new(app, "Thème d’affichage")
-                .text("unsupported-theme-system", "Système")
-                .text("unsupported-theme-light", "Clair")
+            let theme_menu = SubmenuBuilder::new(app, "Тема оформления")
+                .text("unsupported-theme-system", "Системная")
+                .text("unsupported-theme-light", "Светлая")
                 .build()?;
-            let audio_menu = SubmenuBuilder::new(app, "Lecture audio")
-                .text("unsupported-read-aloud", "Lire à voix haute")
+            let audio_menu = SubmenuBuilder::new(app, "Озвучивание")
+                .text("unsupported-read-aloud", "Прочитать вслух")
                 .build()?;
-            let prepress_menu = SubmenuBuilder::new(app, "Utiliser le prépresse")
-                .text("convert-colors", "Convertir les couleurs…")
-                .text("prepress", "Ouvrir le panneau prépresse")
+            let prepress_menu = SubmenuBuilder::new(app, "Допечатная подготовка")
+                .text("convert-colors", "Преобразовать цвета…")
+                .text("prepress", "Открыть допечатную подготовку")
                 .build()?;
-            let view_menu = SubmenuBuilder::new(app, "Affichage")
+            let view_menu = SubmenuBuilder::new(app, "Вид")
                 .item(&rotate_view_menu)
                 .item(&page_navigation_menu)
                 .item(&display_menu)
@@ -2375,56 +2375,56 @@ fn main() {
                 .separator()
                 .item(&prepress_menu)
                 .separator()
-                .text("unsupported-reading-mode", "Mode Lecture")
-                .text("unsupported-fullscreen", "Mode plein écran")
+                .text("unsupported-reading-mode", "Режим чтения")
+                .text("unsupported-fullscreen", "Полноэкранный режим")
                 .separator()
                 .item(&show_hide_menu)
                 .item(&theme_menu)
                 .text(
                     "unsupported-disable-new-acrobat",
-                    "Désactiver la nouvelle version d’Acrobat",
+                    "Отключить новую версию Acrobat",
                 )
                 .separator()
                 .item(&audio_menu)
-                .text("unsupported-tracking-device", "Dispositif de suivi...")
+                .text("unsupported-tracking-device", "Устройство отслеживания…")
                 .build()?;
 
-            let move_resize_menu = SubmenuBuilder::new(app, "Déplacer et redimensionner")
-                .text("unsupported-resize-left", "Vers la gauche")
-                .text("unsupported-resize-right", "Vers la droite")
+            let move_resize_menu = SubmenuBuilder::new(app, "Переместить и изменить размер")
+                .text("unsupported-resize-left", "Влево")
+                .text("unsupported-resize-right", "Вправо")
                 .build()?;
-            let tile_menu = SubmenuBuilder::new(app, "Mosaïque")
-                .text("unsupported-tile-horizontal", "Horizontale")
-                .text("unsupported-tile-vertical", "Verticale")
+            let tile_menu = SubmenuBuilder::new(app, "Расположить плиткой")
+                .text("unsupported-tile-horizontal", "Горизонтально")
+                .text("unsupported-tile-vertical", "Вертикально")
                 .build()?;
-            let window_menu = SubmenuBuilder::new(app, "Fenêtre")
-                .text("unsupported-fill", "Remplir")
-                .text("unsupported-center", "Centrer")
+            let window_menu = SubmenuBuilder::new(app, "Окно")
+                .text("unsupported-fill", "Заполнить")
+                .text("unsupported-center", "По центру")
                 .item(&move_resize_menu)
                 .separator()
                 .text(
                     "unsupported-move-display-1",
-                    "Déplacer vers l’écran principal",
+                    "Переместить на основной экран",
                 )
-                .text("new-window", "Nouvelle fenêtre")
+                .text("new-window", "Новое окно")
                 .separator()
-                .text("unsupported-cascade", "Cascade")
+                .text("unsupported-cascade", "Каскадом")
                 .item(&tile_menu)
-                .text("unsupported-minimize", "Réduire")
+                .text("unsupported-minimize", "Свернуть")
                 .separator()
-                .text("window-current-file", "Document Slate")
+                .text("window-current-file", "Документ Slate RU")
                 .build()?;
 
-            let help_menu = SubmenuBuilder::new(app, "Aide")
-                .text("focus-search", "Rechercher")
-                .text("unsupported-ai-help", "Comment utiliser l’Assistant IA")
+            let help_menu = SubmenuBuilder::new(app, "Справка")
+                .text("focus-search", "Поиск")
+                .text("unsupported-ai-help", "Как пользоваться ИИ-помощником")
                 .separator()
-                .text("modify-pdf", "Aide “Modifier un PDF”")
-                .text("unsupported-help", "Aide Slate")
-                .text("unsupported-tutorials", "Tutoriels Slate")
+                .text("modify-pdf", "Справка по редактированию PDF")
+                .text("unsupported-help", "Справка Slate RU")
+                .text("unsupported-tutorials", "Руководства Slate RU")
                 .separator()
-                .text("settings", "Gérer mon compte...")
-                .text("unsupported-updates", "Rechercher les mises à jour")
+                .text("settings", "Настройки пользователя…")
+                .text("unsupported-updates", "Обновления вручную")
                 .build()?;
             let menu = MenuBuilder::new(app)
                 .items(&[
@@ -2446,7 +2446,7 @@ fn main() {
             #[cfg(target_os = "macos")]
             mac_open::install(app.handle().clone());
 
-            updater::start_background_checks(app.handle().clone());
+
 
             Ok(())
         })

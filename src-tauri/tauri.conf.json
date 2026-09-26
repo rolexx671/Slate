@@ -1,75 +1,76 @@
 {
-	"$schema": "https://raw.githubusercontent.com/tauri-apps/tauri/dev/crates/tauri-utils/schema.json",
-	"productName": "Slate",
-	"version": "0.3.130",
-	"identifier": "com.soflution.slate",
-	"build": {
-		"frontendDist": "./frontend-dist",
-		"devUrl": "http://localhost:1420",
-		"beforeDevCommand": "",
-		"beforeBuildCommand": "bash scripts/ensure-alto-mcp.sh"
-	},
-	"app": {
-		"withGlobalTauri": true,
-		"windows": [
-			{
-				"title": "Slate",
-				"url": "index.html",
-				"width": 1440,
-				"height": 920,
-				"minWidth": 800,
-				"minHeight": 600,
-				"resizable": true,
-				"fullscreen": false
-			}
-		],
-		"security": {
-			"csp": null,
-			"dangerousDisableAssetCspModification": true
-		}
-	},
-	"plugins": {
-		"updater": {
-			"endpoints": [
-				"https://github.com/Soflutionltd/Slate/releases/latest/download/latest.json"
-			],
-			"pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEZEQjg5QjdFQzJFNDkwREQKUldUZGtPVENmcHU0L1ZPSnVFQ1JaMWNCWDJEL3NiNkRLeG1nNS81UzNsNWl3NjRGNmdNSHZDK0gK"
-		}
-	},
-	"bundle": {
-		"active": true,
-		"targets": ["app", "dmg"],
-		"resources": {
-			"libpdfium.dylib": "libpdfium.dylib",
-			"infoplist/en.lproj/InfoPlist.strings": "en.lproj/InfoPlist.strings",
-			"infoplist/fr.lproj/InfoPlist.strings": "fr.lproj/InfoPlist.strings"
-		},
-		"externalBin": ["binaries/alto-mcp"],
-		"icon": [
-			"icons/32x32.png",
-			"icons/128x128.png",
-			"icons/128x128@2x.png",
-			"icons/icon.icns",
-			"icons/icon.ico"
-		],
-		"category": "Productivity",
-		"shortDescription": "Slate — Fast local PDF reader",
-		"longDescription": "Slate is a local PDF reader and editor for opening, searching, zooming, editing and annotating PDF files without an Adobe subscription.",
-		"copyright": "© 2026 Soflution LTD",
-		"createUpdaterArtifacts": true,
-		"fileAssociations": [
-			{
-				"ext": ["pdf"],
-				"name": "PDF Document",
-				"description": "Portable Document Format",
-				"role": "Viewer",
-				"rank": "Default",
-				"mimeType": "application/pdf"
-			}
-		],
-		"macOS": {
-			"minimumSystemVersion": "11.0",
-			"signingIdentity": "Developer ID Application: Soflution ltd (TB8CC687M3)"
-		}
-	}
+  "$schema": "https://raw.githubusercontent.com/tauri-apps/tauri/dev/crates/tauri-utils/schema.json",
+  "productName": "Slate RU",
+  "version": "0.3.138-ru.1",
+  "identifier": "com.rolexx671.slate.ru",
+  "build": {
+    "frontendDist": "./frontend-dist",
+    "devUrl": "http://localhost:1420",
+    "beforeDevCommand": "",
+    "beforeBuildCommand": "bash scripts/ensure-alto-mcp.sh"
+  },
+  "app": {
+    "withGlobalTauri": true,
+    "windows": [
+      {
+        "title": "Slate RU",
+        "url": "index.html",
+        "width": 1440,
+        "height": 920,
+        "minWidth": 800,
+        "minHeight": 600,
+        "resizable": true,
+        "fullscreen": false
+      }
+    ],
+    "security": {
+      "csp": null,
+      "dangerousDisableAssetCspModification": true
+    }
+  },
+  "plugins": {},
+  "bundle": {
+    "active": true,
+    "targets": [
+      "app",
+      "dmg"
+    ],
+    "resources": {
+      "libpdfium.dylib": "libpdfium.dylib",
+      "infoplist/en.lproj/InfoPlist.strings": "en.lproj/InfoPlist.strings",
+      "infoplist/fr.lproj/InfoPlist.strings": "fr.lproj/InfoPlist.strings",
+      "infoplist/ru.lproj/InfoPlist.strings": "ru.lproj/InfoPlist.strings"
+    },
+    "externalBin": [
+      "binaries/alto-mcp"
+    ],
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ],
+    "category": "Productivity",
+    "shortDescription": "Slate RU — редактор PDF на русском языке",
+    "longDescription": "Просмотр, редактирование и аннотирование PDF на вашем Mac.",
+    "copyright": "© 2026 Soflution LTD",
+    "createUpdaterArtifacts": false,
+    "fileAssociations": [
+      {
+        "ext": [
+          "pdf"
+        ],
+        "name": "Документ PDF",
+        "description": "Документ PDF",
+        "role": "Viewer",
+        "rank": "Alternate",
+        "mimeType": "application/pdf"
+      }
+    ],
+    "macOS": {
+      "minimumSystemVersion": "11.0",
+      "signingIdentity": "-"
+    }
+  }
 }

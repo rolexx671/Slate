@@ -651,7 +651,7 @@ fn native_language_path() -> Option<PathBuf> {
     let mut dir = dirs::home_dir()?;
     dir.push("Library");
     dir.push("Application Support");
-    dir.push("com.soflution.slate");
+    dir.push("com.rolexx671.slate.ru");
     Some(dir.join("native-language"))
 }
 
@@ -684,6 +684,7 @@ fn read_persisted_native_language() -> Option<String> {
 /// Tags BCP-47 pour `AppleLanguages` (FR → fr-FR puis fr).
 fn apple_language_tags(lang: &str) -> Vec<&'static str> {
     match lang {
+        "ru" | "ru-RU" | "ru_RU" => vec!["ru-RU", "ru"],
         "fr" | "fr-FR" | "fr_FR" => vec!["fr-FR", "fr"],
         "en" | "en-US" | "en_US" | "en-GB" => vec!["en"],
         _ => vec![],
@@ -694,7 +695,8 @@ fn apple_language_tags(lang: &str) -> Vec<&'static str> {
 /// tôt possible (`main` avant le Builder) et avant impression / dialogues.
 pub fn apply_persisted_apple_languages() {
     match read_persisted_native_language().as_deref() {
-        None | Some("auto") | Some("") => set_apple_languages("auto"),
+        None | Some("") => set_apple_languages("ru"),
+        Some("auto") => set_apple_languages("auto"),
         Some(lang) => set_apple_languages(lang),
     }
 }
@@ -703,6 +705,7 @@ pub fn apply_persisted_apple_languages() {
 /// `auto` / absent → suit la locale processus (souvent le système).
 pub fn effective_ui_language() -> String {
     match read_persisted_native_language().as_deref() {
+        None | Some("ru") | Some("ru-RU") | Some("ru_RU") => "ru".into(),
         Some("fr") | Some("fr-FR") | Some("fr_FR") => "fr".into(),
         Some("en") | Some("en-US") | Some("en_US") | Some("en-GB") => "en".into(),
         Some(other) if other != "auto" && !other.is_empty() => other.to_string(),

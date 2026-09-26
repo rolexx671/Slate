@@ -17,7 +17,7 @@ pub struct LlmConfig {
 fn config_path() -> Result<PathBuf, String> {
     let dir = dirs::config_dir()
         .ok_or_else(|| "No config directory available.".to_string())?
-        .join("AltoPDF");
+        .join("com.rolexx671.slate.ru");
     fs::create_dir_all(&dir).map_err(|e| e.to_string())?;
     Ok(dir.join("llm.json"))
 }

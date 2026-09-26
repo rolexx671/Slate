@@ -1,3 +1,4 @@
+import { ru, pluralRu, localizeError } from './ru.js';
 import * as pdfjsLib from './vendor/pdf.min.mjs';
 import {
 	BlockState,
@@ -59,7 +60,7 @@ window.addEventListener('unhandledrejection', (event) => {
 	console.error('Unhandled rejection', event.reason);
 });
 
-const SETTINGS_KEY = 'alto-pdf-settings:v1';
+const SETTINGS_KEY = 'slate-ru-settings:v1';
 const CSS_UNITS = 96 / 72;
 const EDIT_BLOCK_PAD_X = 4;
 const EDIT_BLOCK_PAD_Y = 3;
@@ -70,7 +71,7 @@ function pageViewport(page, zoom = state.zoom) {
 
 const defaultSettings = {
 	settingsVersion: 5,
-	language: 'auto',
+	language: 'ru',
 	defaultZoom: 1,
 	fitWidth: true,
 	pageLayout: 'continuous',
@@ -397,6 +398,7 @@ const elements = {
 };
 
 const translations = {
+ ru,
 	en: {
 		allTools: 'All tools',
 		modify: 'Modify',
@@ -1227,7 +1229,8 @@ const iconTints = {
 
 function currentLocale() {
 	if (state.settings.language && state.settings.language !== 'auto') return state.settings.language;
-	return navigator.language?.toLowerCase().startsWith('fr') ? 'fr' : 'en';
+	const lang = navigator.language?.slice(0, 2).toLowerCase();
+ return ['ru', 'fr', 'en'].includes(lang) ? lang : 'ru';
 }
 
 // Aligne la langue des panneaux et menus NATIFS macOS (impression, enregistrer…)
@@ -1243,7 +1246,7 @@ function syncNativeLanguage() {
 }
 
 function t(key, ...args) {
-	const value = translations[currentLocale()][key] ?? translations.en[key] ?? key;
+	const value = translations[currentLocale()]?.[key] ?? translations.ru[key] ?? translations.en[key] ?? key;
 	return typeof value === 'function' ? value(...args) : value;
 }
 
@@ -1274,7 +1277,7 @@ function applyIcon(element, name) {
 
 function localizeUi() {
 	document.documentElement.lang = currentLocale();
-	document.title = 'Slate';
+	document.title = 'Slate RU';
 
 	setText('.top-tabs [data-open-panel="tools"]', 'allTools');
 	setText(elements.modifyTab, 'modify');
@@ -1285,7 +1288,7 @@ function localizeUi() {
 		button.disabled = true;
 		button.title =
 			currentLocale() === 'fr'
-				? 'Cette fonction sera câblée dans une prochaine passe.'
+				? t('extra13')
 				: button.dataset.toolDisabled;
 	}
 	setPlaceholder(elements.searchInput, 'searchPlaceholder');
@@ -1413,6 +1416,8 @@ function loadSettings() {
 	try {
 		const parsed = JSON.parse(localStorage.getItem(SETTINGS_KEY) || '{}');
 		const settings = { ...defaultSettings, ...parsed };
+		if (!['ru', 'en', 'fr', 'auto'].includes(settings.language)) settings.language = 'ru';
+		settings.autoUpdate = false;
 		if (parsed.settingsVersion !== defaultSettings.settingsVersion) {
 			settings.defaultZoom = defaultSettings.defaultZoom;
 			settings.fitWidth = defaultSettings.fitWidth;
@@ -1441,7 +1446,7 @@ async function invokeCommand(command, args) {
 	if (bridge?.invoke) {
 		return bridge.invoke(command, args);
 	}
-	throw new Error('Native Tauri commands are unavailable in this window.');
+	throw new Error(t('extra15'));
 }
 
 // Pour les commandes qui renvoient des octets bruts (PDF, fichiers) : côté Rust
@@ -1457,7 +1462,7 @@ async function invokeBytes(command, args) {
 }
 
 function setStatus(message, tone = 'info') {
-	elements.status.textContent = message;
+	elements.status.textContent = tone === 'error' ? localizeError(message) : message;
 	elements.status.dataset.tone = tone;
 	if (message) {
 		window.clearTimeout(setStatus.timeout);
@@ -1468,11 +1473,11 @@ function setStatus(message, tone = 'info') {
 }
 
 function bytesToMb(bytes) {
-	return `${(bytes / 1024 / 1024).toFixed(2)} MB`;
+	return `${(bytes / 1024 / 1024).toLocaleString("ru-RU", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}${t("fragment2")}`;
 }
 
 function storageKey() {
-	return state.fingerprint ? `alto-pdf-reader:${state.fingerprint}` : null;
+	return state.fingerprint ? `slate-ru-reader:${state.fingerprint}` : null;
 }
 
 function currentTab() {
@@ -2163,7 +2168,7 @@ async function openPdfFromBytes(bytes, fileName, options = {}) {
 				await activateTab(existing.id);
 				persistOpenSession();
 				setStatus(
-					currentLocale() === 'fr' ? 'Ce document est déjà ouvert.' : 'This document is already open.'
+					currentLocale() === 'fr' ? 'Ce document est déjà ouvert.' : t('extra22')
 				);
 				return;
 			}
@@ -2213,16 +2218,16 @@ async function openPdfFromBytes(bytes, fileName, options = {}) {
 		if (state.page > 1) {
 			goToPage(state.page);
 		}
-		setTimeout(maybePromptDefaultApp, 600);
+		// Do not prompt to replace the default PDF application.
 		persistOpenSession();
 		if (tab.filePath || tab.recoveryPath) await restorePersistedEditHistory(tab);
 	} catch (error) {
 		console.error(error);
-		setStatus(error instanceof Error ? error.message : 'Failed to open PDF.', 'error');
+		setStatus(error instanceof Error ? error.message : t('extra23'), 'error');
 	}
 }
 
-const TAB_SAVED_MARK = `<span class="document-tab-saved" aria-label="Saved"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M2.2 6.2 4.8 8.8 9.8 3.2" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span>`;
+const TAB_SAVED_MARK = `<span class="document-tab-saved" aria-label="Сохранено"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M2.2 6.2 4.8 8.8 9.8 3.2" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span>`;
 let _justSavedTabId = null;
 let _justSavedTimer = null;
 
@@ -2244,11 +2249,11 @@ function flashSavedTab(tabId) {
 		el.classList.add('just-saved');
 		const mark = el.querySelector('.document-tab-saved');
 		if (mark) {
-			mark.setAttribute('aria-label', currentLocale() === 'fr' ? 'Enregistré' : 'Saved');
+			mark.setAttribute('aria-label', currentLocale() === 'fr' ? 'Enregistré' : t('extra24'));
 		} else {
 			el.querySelector('.document-tab-title')?.insertAdjacentHTML('afterend', TAB_SAVED_MARK);
 			const added = el.querySelector('.document-tab-saved');
-			added?.setAttribute('aria-label', currentLocale() === 'fr' ? 'Enregistré' : 'Saved');
+			added?.setAttribute('aria-label', currentLocale() === 'fr' ? 'Enregistré' : t('extra25'));
 		}
 	}
 	if (elements.saveButton) {
@@ -2269,8 +2274,8 @@ function renderTabs() {
 		tabButton.dataset.tabId = tab.id;
 		tabButton.innerHTML = `
 			<span class="document-tab-title">${escapeHtml(tab.fileName || t('untitledPdf'))}</span>
-			${tab.dirty ? '<span class="document-tab-dirty" aria-label="Unsaved changes"></span>' : justSaved ? TAB_SAVED_MARK : ''}
-			<span class="document-tab-close" aria-label="Close tab">×</span>
+			${tab.dirty ? '<span class="document-tab-dirty" aria-label="Несохранённые изменения"></span>' : justSaved ? TAB_SAVED_MARK : ''}
+			<span class="document-tab-close" aria-label="Закрыть вкладку">×</span>
 		`;
 		tabButton.addEventListener('click', () => {
 			void activateTab(tab.id);
@@ -2574,7 +2579,7 @@ async function onNativeTabDragEnded(action) {
 		return;
 	}
 	if (action === 'copied') {
-		setStatus(currentLocale() === 'fr' ? 'PDF déposé.' : 'PDF dropped.');
+		setStatus(currentLocale() === 'fr' ? 'PDF déposé.' : t('extra35'));
 	}
 	commitTabOrderFromDom();
 }
@@ -2597,7 +2602,7 @@ async function detachTabToNewWindow(tabId, event) {
 		setStatus(
 			currentLocale() === 'fr'
 				? 'Impossible d’ouvrir une nouvelle fenêtre : document introuvable.'
-				: 'Cannot open a new window: document missing.',
+				: t('extra38'),
 			'error'
 		);
 		commitTabOrderFromDom();
@@ -2658,9 +2663,9 @@ function scrollActiveTabIntoView() {
 
 const SIGNATURES_KEY = 'alto-saved-signatures';
 const SIGNATURE_FONTS = [
-	{ label: 'Cursive', css: '"Snell Roundhand", "Apple Chancery", cursive' },
-	{ label: 'Élégant', css: '"Zapfino", "Apple Chancery", cursive' },
-	{ label: 'Manuscrit', css: '"Bradley Hand", "Segoe Script", cursive' }
+	{ label: t('extra39'), css: '"Snell Roundhand", "Apple Chancery", cursive' },
+	{ label: "Изящный", css: '"Zapfino", "Apple Chancery", cursive' },
+	{ label: t('extra42'), css: '"Bradley Hand", "Segoe Script", cursive' }
 ];
 
 const signElements = {};
@@ -2730,60 +2735,60 @@ function signCopy(kind) {
 		add: initials
 			? fr
 				? '+ Ajouter un paraphe'
-				: '+ Add initials'
+				: t('extra45')
 			: fr
 				? '+ Ajouter une signature'
-				: '+ Add a signature',
+				: t('extra47'),
 		title: initials
 			? fr
 				? 'Créer un paraphe'
-				: 'Create initials'
+				: t('extra49')
 			: fr
 				? 'Créer une signature'
-				: 'Create a signature',
+				: t('extra51'),
 		save: initials
 			? fr
 				? 'Enregistrer le paraphe'
-				: 'Save initials'
+				: t('extra53')
 			: fr
 				? 'Enregistrer la signature'
-				: 'Save signature',
+				: t('extra55'),
 		placeholder: initials
 			? fr
 				? 'Tape tes initiales'
-				: 'Type your initials'
+				: t('extra57')
 			: fr
 				? 'Tape ton nom'
-				: 'Type your name',
+				: t('extra59'),
 		emptyDraw: initials
 			? fr
 				? 'Dessine ton paraphe.'
-				: 'Draw your initials.'
+				: t('extra61')
 			: fr
 				? 'Dessine ta signature.'
-				: 'Draw your signature.',
+				: t('extra63'),
 		empty: initials
 			? fr
 				? 'Paraphe vide.'
-				: 'Empty initials.'
+				: t('extra65')
 			: fr
 				? 'Signature vide.'
-				: 'Empty signature.',
+				: t('extra67'),
 		saved: initials
 			? fr
 				? 'Paraphe enregistré.'
-				: 'Initials saved.'
+				: t('extra69')
 			: fr
 				? 'Signature enregistrée.'
-				: 'Signature saved.',
+				: t('extra71'),
 		arm: initials
 			? fr
 				? 'Clique sur la page pour poser ton paraphe.'
-				: 'Click on the page to place your initials.'
+				: t('extra73')
 			: fr
 				? 'Clique sur la page pour poser ta signature.'
-				: 'Click on the page to place your signature.',
-		alt: initials ? (fr ? 'paraphe' : 'initials') : 'signature'
+				: t('extra75'),
+		alt: initials ? (fr ? "инициалы" : 'initials') : 'signature'
 	};
 }
 
@@ -2814,7 +2819,7 @@ function renderSignSlot(listEl, kind) {
 		const del = document.createElement('button');
 		del.type = 'button';
 		del.className = 'sign-item-delete';
-		del.setAttribute('aria-label', 'Supprimer');
+		del.setAttribute('aria-label', t('extra76'));
 		del.textContent = '×';
 		del.addEventListener('click', (event) => {
 			event.stopPropagation();
@@ -3362,7 +3367,7 @@ function setupSignFeature() {
 		reader.onload = () => {
 			_signImportDataUrl = reader.result;
 			if (signElements.importPreview) {
-				signElements.importPreview.innerHTML = `<img src="${_signImportDataUrl}" alt="aperçu" />`;
+				signElements.importPreview.innerHTML = `<img src="${_signImportDataUrl}${t("fragment27")}`;
 			}
 		};
 		reader.readAsDataURL(file);
@@ -3694,10 +3699,10 @@ async function setupAiAssistant() {
 					base_url: aiState.config.baseUrl
 				}
 			});
-			aiElements.configStatus.textContent = 'Connexion enregistrée.';
+			aiElements.configStatus.textContent = t('extra83');
 			aiElements.settings.open = false;
 		} catch (error) {
-			aiElements.configStatus.textContent = String(error);
+			aiElements.configStatus.textContent = localizeError(error);
 		}
 	});
 
@@ -3736,26 +3741,26 @@ function appendAiBubble(role, text) {
 
 async function buildAiSystemPrompt() {
 	const lines = [
-		"Tu es l'assistant intégré de Slate, un éditeur PDF. Tu réponds en français, de façon concise.",
-		"Tu peux proposer des modifications du document. Pour cela, termine ta réponse par un bloc de code délimité ```alto-actions contenant un tableau JSON d'actions.",
-		'Actions disponibles :',
-		'- {"action":"replace_text","find":"texte exact actuel","replace":"nouveau texte","page":N}',
-		'- {"action":"redact","find":"texte à masquer","page":N}',
+		t('extra85'),
+		t('extra86'),
+		t('extra87'),
+		t('extra88'),
+		t('extra89'),
 		'- {"action":"rotate_page","page":N,"angle":90|180|-90}',
 		'- {"action":"delete_page","page":N}',
 		'- {"action":"goto_page","page":N}',
-		"\"page\" est optionnel pour replace_text/redact (défaut: page courante). N'invente jamais un texte qui n'existe pas dans le document. Si aucune modification n'est demandée, ne mets pas de bloc d'actions."
+		t('extra93')
 	];
 	if (state.pdf) {
-		lines.push(`\nDocument : « ${state.fileName} », ${state.pdf.numPages} pages, page courante ${state.page}.`);
+		lines.push(`${t("fragment29")}${state.fileName} », ${state.pdf.numPages}${t("fragment30")}${state.page}.`);
 		try {
 			const text = await extractPageText(state.page);
-			if (text) lines.push(`Texte de la page ${state.page} :\n"""${text.slice(0, 4000)}"""`);
+			if (text) lines.push(`${t("fragment31")}${state.page} :\n"""${text.slice(0, 4000)}"""`);
 		} catch (_err) {
 			/* noop */
 		}
 	} else {
-		lines.push('\nAucun document ouvert actuellement.');
+		lines.push(t('extra94'));
 	}
 	return lines.join('\n');
 }
@@ -3777,7 +3782,7 @@ function parseAiActions(text) {
 async function sendAiMessage(text) {
 	if (aiState.busy) return;
 	if (aiState.config.provider !== 'local' && !aiState.config.apiKey) {
-		appendAiBubble('system', 'Configure d’abord ta clé API dans « Connexion au modèle ».');
+		appendAiBubble('system', t('extra95'));
 		aiElements.settings.open = true;
 		return;
 	}
@@ -3807,7 +3812,7 @@ async function sendAiMessage(text) {
 		if (actions.length) renderAiActionCards(actions);
 	} catch (error) {
 		typing.remove();
-		appendAiBubble('system', String(error));
+		appendAiBubble('system', localizeError(error));
 	} finally {
 		aiState.busy = false;
 		aiElements.send.disabled = false;
@@ -3818,17 +3823,17 @@ async function sendAiMessage(text) {
 function describeAiAction(action) {
 	switch (action.action) {
 		case 'replace_text':
-			return `Remplacer « ${action.find} » par « ${action.replace} »${action.page ? ` (page ${action.page})` : ''}`;
+			return `${t("fragment34")}${action.find}${t("fragment35")}${action.replace} »${action.page ? `${t("fragment33")}${action.page})` : ''}`;
 		case 'redact':
-			return `Masquer « ${action.find} »${action.page ? ` (page ${action.page})` : ''}`;
+			return `${t("fragment37")}${action.find} »${action.page ? `${t("fragment36")}${action.page})` : ''}`;
 		case 'rotate_page':
-			return `Pivoter la page ${action.page} de ${action.angle}°`;
+			return `${t("fragment38")}${action.page}${t("fragment39")}${action.angle}°`;
 		case 'delete_page':
-			return `Supprimer la page ${action.page}`;
+			return `${t("fragment40")}${action.page}`;
 		case 'goto_page':
-			return `Aller à la page ${action.page}`;
+			return `${t("fragment41")}${action.page}`;
 		default:
-			return `Action inconnue : ${action.action}`;
+			return `${t("fragment42")}${action.action}`;
 	}
 }
 
@@ -3850,17 +3855,17 @@ function renderAiActionCards(actions) {
 		const apply = document.createElement('button');
 		apply.type = 'button';
 		apply.className = 'ai-apply-button';
-		apply.textContent = 'Appliquer';
+		apply.textContent = t('extra97');
 		const skip = document.createElement('button');
 		skip.type = 'button';
 		skip.className = 'ai-skip-button';
-		skip.textContent = 'Ignorer';
+		skip.textContent = t('extra98');
 		apply.addEventListener('click', async () => {
 			apply.disabled = true;
 			const ok = await applyAiAction(action);
 			if (ok) {
 				apply.classList.add('done');
-				apply.textContent = 'Appliqué';
+				apply.textContent = "Применено";
 				skip.remove();
 			} else {
 				apply.disabled = false;
@@ -3877,7 +3882,7 @@ function renderAiActionCards(actions) {
 		const all = document.createElement('button');
 		all.type = 'button';
 		all.className = 'ai-apply-all';
-		all.textContent = 'Tout appliquer';
+		all.textContent = t('extra99');
 		all.addEventListener('click', () => {
 			cards.forEach((btn) => {
 				if (!btn.disabled) btn.click();
@@ -3941,7 +3946,7 @@ async function applyAiAction(action) {
 				await ensureEditBlocksForPage(page);
 				const block = findAiBlock(action.find, state.page);
 				if (!block) {
-					appendAiBubble('system', `Texte « ${action.find} » introuvable sur la page ${state.page}.`);
+					appendAiBubble('system', `${t("fragment43")}${action.find}${t("fragment44")}${state.page}.`);
 					return false;
 				}
 				pushHistory('histTextEdit');
@@ -3958,7 +3963,7 @@ async function applyAiAction(action) {
 				await ensureEditBlocksForPage(page);
 				const block = findAiBlock(action.find, state.page);
 				if (!block) {
-					appendAiBubble('system', `Texte « ${action.find} » introuvable sur la page ${state.page}.`);
+					appendAiBubble('system', `${t("fragment45")}${action.find}${t("fragment46")}${state.page}.`);
 					return false;
 				}
 				pushHistory('histBlockDelete');
@@ -3968,11 +3973,11 @@ async function applyAiAction(action) {
 				return true;
 			}
 			default:
-				appendAiBubble('system', `Action non supportée : ${action.action}`);
+				appendAiBubble('system', `${t("fragment47")}${action.action}`);
 				return false;
 		}
 	} catch (error) {
-		appendAiBubble('system', String(error));
+		appendAiBubble('system', localizeError(error));
 		return false;
 	}
 }
@@ -3994,7 +3999,7 @@ function setupToolsResize() {
 	const handle = document.createElement('div');
 	handle.className = 'tools-resize-handle';
 	handle.setAttribute('role', 'separator');
-	handle.setAttribute('aria-label', 'Redimensionner le panneau');
+	handle.setAttribute('aria-label', t('extra100'));
 	document.body.append(handle);
 
 	const apply = (value) => {
@@ -4052,13 +4057,13 @@ function setupDefaultAppPrompt() {
 				setStatus(
 					fr
 						? 'Slate est maintenant ton lecteur PDF par défaut.'
-						: 'Slate is now your default PDF reader.'
+						: t('extra102')
 				);
 			} else {
 				setStatus(
 					fr
 						? 'Choisis Slate comme lecteur PDF dans les réglages qui viennent de s’ouvrir.'
-						: 'Choose Slate as your default PDF reader in the settings that just opened.'
+						: t('extra104')
 				);
 			}
 		} catch (error) {
@@ -4390,7 +4395,7 @@ async function mountPagesStack() {
 		wrapper.style.height = `${viewport.height}px`;
 
 		const canvas = document.createElement('canvas');
-		canvas.setAttribute('aria-label', `PDF page ${pageNumber}`);
+		canvas.setAttribute('aria-label', `${t("fragment55")}${pageNumber}`);
 		canvas.width = Math.floor(viewport.width * ratio);
 		canvas.height = Math.floor(viewport.height * ratio);
 		canvas.style.width = `${viewport.width}px`;
@@ -4641,7 +4646,7 @@ function applyPageDimensions(data, cssWidth, cssHeight) {
 // Peint une page PDF.js dans un canvas déjà dimensionné (en pixels physiques).
 async function paintPageCanvas(page, viewport, canvas, ratio) {
 	const context = canvas.getContext('2d', { alpha: false });
-	if (!context) throw new Error('Canvas context is unavailable.');
+	if (!context) throw new Error(t('extra107'));
 	// Lissage ACTIVÉ : les images embarquées dans le PDF (logos, scans) sont
 	// presque toujours ré-échantillonnées par le zoom ; sans lissage elles
 	// sortent en « nearest neighbor » → aspect pixelisé sur toute la page.
@@ -4715,7 +4720,7 @@ async function rerenderPageQuietly(pageNumber) {
 
 	const ratio = pageRenderRatio();
 	const canvas = document.createElement('canvas');
-	canvas.setAttribute('aria-label', `PDF page ${pageNumber}`);
+	canvas.setAttribute('aria-label', `${t("fragment76")}${pageNumber}`);
 	canvas.width = Math.floor(cssWidth * ratio);
 	canvas.height = Math.floor(cssHeight * ratio);
 	canvas.style.width = `${cssWidth}px`;
@@ -5385,7 +5390,7 @@ function applyDateMask(input, raw, format) {
 function isoToDate(iso, format) {
 	if (!iso || !/^\d{4}-\d{2}-\d{2}$/.test(iso)) return '';
 	const [yyyy, mm, dd] = iso.split('-');
-	const locale = currentLocale() === 'fr' ? 'fr-FR' : 'en-US';
+	const locale = currentLocale() === 'ru' ? 'ru-RU' : currentLocale() === 'fr' ? 'fr-FR' : 'en-US';
 	const date = new Date(Number(yyyy), Number(mm) - 1, Number(dd));
 	return dateFormatTokens(format)
 		.map((entry) => {
@@ -5516,7 +5521,7 @@ function bindFormLayer(container, widgets, viewport) {
 			section.classList.add('form-image-button');
 			section.title =
 				widget.alternativeText ||
-				(currentLocale() === 'fr' ? 'Cliquer pour choisir une image' : 'Click to choose an image');
+				(currentLocale() === 'fr' ? 'Cliquer pour choisir une image' : t('extra119'));
 			section.addEventListener(
 				'click',
 				(event) => {
@@ -5584,7 +5589,7 @@ function ensureSignatureHitTarget(container, widget, viewport) {
 	section.classList.add('form-signature-field');
 	section.title =
 		widget.alternativeText ||
-		(currentLocale() === 'fr' ? 'Cliquer pour signer' : 'Click to sign');
+		(currentLocale() === 'fr' ? 'Cliquer pour signer' : t('extra121'));
 	positionSignatureHitTarget(section, widget, viewport);
 	return section;
 }
@@ -5689,7 +5694,7 @@ function positionDateCalendar(anchor) {
 }
 
 function dateWeekdayLabels(weekStartsOn) {
-	const locale = currentLocale() === 'fr' ? 'fr-FR' : 'en-US';
+	const locale = currentLocale() === 'ru' ? 'ru-RU' : currentLocale() === 'fr' ? 'fr-FR' : 'en-US';
 	const labels = [];
 	for (let i = 0; i < 7; i += 1) {
 		const day = new Date(2024, 0, 1 + i);
@@ -5704,8 +5709,8 @@ function renderDateCalendar() {
 	const view = _dateCal.view instanceof Date ? _dateCal.view : new Date();
 	const year = view.getFullYear();
 	const month = view.getMonth();
-	const locale = currentLocale() === 'fr' ? 'fr-FR' : 'en-US';
-	const weekStartsOn = currentLocale() === 'fr' ? 1 : 0;
+	const locale = currentLocale() === 'ru' ? 'ru-RU' : currentLocale() === 'fr' ? 'fr-FR' : 'en-US';
+	const weekStartsOn = currentLocale() === 'en' ? 0 : 1;
 	const selectedIso = dateToIso(_dateCal.input?.value || '', _dateCal.format);
 	const todayIso = toIsoDate(new Date());
 	const title = new Intl.DateTimeFormat(locale, { month: 'long', year: 'numeric' }).format(
@@ -5717,7 +5722,7 @@ function renderDateCalendar() {
 	const prev = document.createElement('button');
 	prev.type = 'button';
 	prev.className = 'form-date-calendar-nav';
-	prev.setAttribute('aria-label', currentLocale() === 'fr' ? 'Mois précédent' : 'Previous month');
+	prev.setAttribute('aria-label', currentLocale() === 'fr' ? 'Mois précédent' : t('extra124'));
 	prev.textContent = '‹';
 	prev.addEventListener('click', () => {
 		_dateCal.view = new Date(year, month - 1, 1);
@@ -5730,7 +5735,7 @@ function renderDateCalendar() {
 	const next = document.createElement('button');
 	next.type = 'button';
 	next.className = 'form-date-calendar-nav';
-	next.setAttribute('aria-label', currentLocale() === 'fr' ? 'Mois suivant' : 'Next month');
+	next.setAttribute('aria-label', currentLocale() === 'fr' ? 'Mois suivant' : t('extra126'));
 	next.textContent = '›';
 	next.addEventListener('click', () => {
 		_dateCal.view = new Date(year, month + 1, 1);
@@ -5945,7 +5950,7 @@ async function bakeFormValues() {
 			tab.fileBytes = bytes;
 			return true;
 		} catch (error) {
-			console.warn('Form values could not be written into the document.', error);
+			console.warn(t('extra131'), error);
 			return false;
 		} finally {
 			_formBakePromise = null;
@@ -6143,7 +6148,7 @@ async function handleFormImageButton(fieldName) {
 	try {
 		const images = await invokeCommand('pick_images');
 		if (!images || !images.length) return;
-		setStatus(currentLocale() === 'fr' ? 'Insertion de l’image…' : 'Inserting image…');
+		setStatus(currentLocale() === 'fr' ? 'Insertion de l’image…' : t('extra133'));
 		if (state.nativeTextDirty) await syncNativeDocumentBytes({ render: false });
 		const tab = currentTab();
 		if (tab) {
@@ -6159,7 +6164,7 @@ async function handleFormImageButton(fieldName) {
 		await replaceCurrentDocumentBytes(updated);
 		markDirty();
 		refreshFormsPanelValues();
-		setStatus(currentLocale() === 'fr' ? 'Image insérée.' : 'Image inserted.');
+		setStatus(currentLocale() === 'fr' ? 'Image insérée.' : t('extra135'));
 	} catch (error) {
 		setStatus(error instanceof Error ? error.message : String(error), 'error');
 	}
@@ -6185,7 +6190,7 @@ function handleFormSignatureField(fieldName) {
 	setStatus(
 		currentLocale() === 'fr'
 			? 'Choisis une signature ou crées-en une.'
-			: 'Choose a signature or create one.'
+			: t('extra137')
 	);
 }
 
@@ -6196,7 +6201,7 @@ async function applyFormSignature(sig) {
 	try {
 		const image = dataUrlToBytes(sig.dataUrl);
 		if (!image.length) return;
-		setStatus(currentLocale() === 'fr' ? 'Signature en cours…' : 'Signing…');
+		setStatus(currentLocale() === 'fr' ? 'Signature en cours…' : t('extra139'));
 		if (state.nativeTextDirty) await syncNativeDocumentBytes({ render: false });
 		const tab = currentTab();
 		if (tab) {
@@ -6212,7 +6217,7 @@ async function applyFormSignature(sig) {
 		await replaceCurrentDocumentBytes(updated);
 		markDirty();
 		refreshFormsPanelValues();
-		setStatus(currentLocale() === 'fr' ? 'Signature apposée.' : 'Signature applied.');
+		setStatus(currentLocale() === 'fr' ? 'Signature apposée.' : t('extra141'));
 	} catch (error) {
 		setStatus(error instanceof Error ? error.message : String(error), 'error');
 	}
@@ -6809,7 +6814,7 @@ function renderResults() {
 		const button = document.createElement('button');
 		button.type = 'button';
 		button.className = `result-button ${index === state.search.activeIndex ? 'active' : ''}`;
-		button.innerHTML = `<strong>Page ${result.page}</strong>${escapeHtml(result.snippet)}`;
+		button.innerHTML = `${t("fragment111")}${result.page}</strong>${escapeHtml(result.snippet)}`;
 		button.addEventListener('click', () => goToResult(result, index));
 		elements.results.append(button);
 	});
@@ -6828,8 +6833,7 @@ function renderNotes() {
 		const card = document.createElement('div');
 		card.className = 'note-card';
 		card.innerHTML = `
-			<button class="delete-note" type="button" data-id="${annotation.id}">Delete</button>
-			<strong>${annotation.type} · Page ${annotation.page}${annotation.author ? ` · ${escapeHtml(annotation.author)}` : ''}</strong>
+			<button class="delete-note" type="button" data-id="${annotation.id}${t("fragment116")}${annotation.type}${t("fragment117")}${annotation.page}${annotation.author ? ` · ${escapeHtml(annotation.author)}` : ''}</strong>
 			${escapeHtml(annotation.text)}
 		`;
 		card.querySelector('button')?.addEventListener('click', () => deleteAnnotation(annotation.id));
@@ -7062,7 +7066,7 @@ async function pdfiumEditBlocks(viewport) {
 					id: block.id || `pdfium-${state.page}-${index}`,
 					kind: block.kind || 'text',
 					page: state.page,
-					text: block.text || (block.kind === 'image' ? 'Image' : ''),
+					text: block.text || (block.kind === 'image' ? t('extra148') : ''),
 					originalText: block.text || '',
 					x,
 					y,
@@ -7232,7 +7236,7 @@ async function runOcrForCurrentPage(openPanel = false, options = {}) {
 	} catch (error) {
 		console.error(error);
 		if (!silent) {
-			setStatus(error instanceof Error ? error.message : 'Local OCR failed.', 'error');
+			setStatus(error instanceof Error ? error.message : t('extra151'), 'error');
 		}
 		return 0;
 	}
@@ -7676,7 +7680,7 @@ function _mergeFontFamilies(families) {
 // libellé "auto" (police détectée du bloc).
 let _fontComboFamilies = [];
 let _fontComboValue = '';
-let _fontComboAutoLabel = 'Police du document';
+let _fontComboAutoLabel = t('extra354');
 // Plage de texte mémorisée à l'ouverture du combobox (si on éditait en inline avec
 // une sous-sélection). Permet d'appliquer la police aux SEULS caractères choisis,
 // car ouvrir/chercher dans le popover détruit la sélection native.
@@ -7690,7 +7694,7 @@ function isFontComboOpen() {
 function setFontComboValue(value) {
 	_fontComboValue = value || '';
 	if (!elements.fontComboValue) return;
-	const label = _fontComboValue || _fontComboAutoLabel || 'Police du document';
+	const label = _fontComboValue || _fontComboAutoLabel || t('extra355');
 	elements.fontComboValue.textContent = label;
 	elements.fontComboValue.style.fontFamily = _fontComboValue
 		? `"${_fontComboValue}", sans-serif`
@@ -7703,7 +7707,7 @@ function renderFontComboList(filter) {
 	if (!list) return;
 	const query = (filter || '').trim().toLowerCase();
 	const rows = [];
-	const autoLabel = _fontComboAutoLabel || 'Police du document';
+	const autoLabel = _fontComboAutoLabel || t('extra356');
 	if (!query || autoLabel.toLowerCase().includes(query)) {
 		rows.push({ value: '', label: autoLabel });
 	}
@@ -7717,7 +7721,7 @@ function renderFontComboList(filter) {
 	if (!rows.length) {
 		const empty = document.createElement('div');
 		empty.className = 'font-combo-empty';
-		empty.textContent = 'Aucune police trouvée';
+		empty.textContent = t('extra357');
 		list.append(empty);
 		return;
 	}
@@ -8878,7 +8882,7 @@ function appendFontWarningBadge(editLayer, block, visualBox) {
 	const badge = document.createElement('div');
 	badge.className = 'font-warning-badge';
 	badge.textContent = '!';
-	badge.title = `Police « ${base} » non disponible sur cet ordinateur. Le texte d'origine est préservé tel quel ; les caractères ajoutés utilisent une police approchante. Installez la police pour une correspondance exacte.`;
+	badge.title = `${t("fragment162")}${base}${t("fragment163")}`;
 	const x = (visualBox?.x ?? block.x) + (visualBox?.width ?? block.width);
 	const y = visualBox?.y ?? block.y;
 	badge.style.left = `${x + 8}px`;
@@ -8938,15 +8942,15 @@ function detectFieldKind(text, documentType = 'other') {
 
 function fieldLabel(kind) {
 	return ({
-		document_number: 'Numéro',
-		date: 'Date',
-		total: 'Total',
+		document_number: "Номер",
+		date: t('extra380'),
+		total: t('extra381'),
 		tax: 'TVA',
 		company_id: 'SIRET/SIREN',
-		vat_id: 'TVA intracom',
+		vat_id: t('extra382'),
 		iban: 'IBAN',
-		party: 'Tiers'
-	})[kind] || 'Champ';
+		party: t('extra383')
+	})[kind] || t('extra384');
 }
 
 function isCriticalField(kind) {
@@ -9104,19 +9108,19 @@ function appendBlockQualityBadge(editLayer, block) {
 	let label;
 	let cls;
 	if (block.critical && block.fieldKind) {
-		label = `Critique · ${fieldLabel(block.fieldKind)}`;
+		label = `${t("fragment171")}${fieldLabel(block.fieldKind)}`;
 		cls = 'badge-low';
 	} else if (block.fieldKind) {
 		label = fieldLabel(block.fieldKind);
 		cls = 'badge-native';
 	} else if (isOcr && confidence < 70) {
-		label = 'OCR · confiance faible';
+		label = t('extra386');
 		cls = 'badge-low';
 	} else if (isOcr) {
 		label = 'OCR';
 		cls = 'badge-ocr';
 	} else {
-		label = 'PDF natif';
+		label = t('extra387');
 		cls = 'badge-native';
 	}
 	const badge = document.createElement('div');
@@ -9541,7 +9545,7 @@ function enterEditingMode(element, block) {
 			setStatus(
 				currentLocale() === 'fr'
 					? 'Ajout de ligne non supporté sur ce texte PDF.'
-					: 'Adding lines is not supported on this PDF text.',
+					: t('extra392'),
 				'info'
 			);
 			return;
@@ -9927,7 +9931,7 @@ function renderEditBlocksForPage(pageNumber) {
 			element.style.top = `${Math.round(block.y)}px`;
 			element.tabIndex = 0;
 			element.setAttribute('role', 'button');
-			element.setAttribute('aria-label', block.text || (block.kind === 'image' ? 'Image' : 'Bloc'));
+			element.setAttribute('aria-label', block.text || (block.kind === 'image' ? t('extra401') : t('extra402')));
 			element.title = block.text;
 
 			// Bloc-paragraphe : interligne = pas entre lignes d'origine.
@@ -11971,7 +11975,7 @@ async function restoreNativeDocumentBaseline(pageNumber) {
 		const analysis = await analyzePageCached(pageNumber);
 		applyNativeAnalysisToPage(pageNumber, analysis, null);
 	} catch (error) {
-		console.warn('Restauration du document natif impossible.', error);
+		console.warn(t('extra407'), error);
 	}
 	return mustRestore;
 }
@@ -12034,10 +12038,10 @@ function rejectUncommittedNativeEdit(block, error) {
 	setStatus(
 		currentLocale() === 'fr'
 			? 'Cette frappe a été refusée pour préserver exactement le PDF.'
-			: 'This keystroke was rejected to preserve the PDF exactly.',
+			: t('extra409'),
 		'info'
 	);
-	console.warn('Édition native refusée sans changement de rendu.', error);
+	console.warn(t('extra410'), error);
 	return true;
 }
 
@@ -12084,10 +12088,10 @@ async function recoverCommittedNativeMismatch(block, error) {
 	setStatus(
 		currentLocale() === 'fr'
 			? 'La frappe a été annulée sans changer la police ni le rendu du PDF.'
-			: 'The keystroke was cancelled without changing the PDF font or rendering.',
+			: t('extra412'),
 		'info'
 	);
-	console.warn('Incohérence native restaurée sans repli HTML.', error);
+	console.warn(t('extra413'), error);
 	return true;
 }
 
@@ -12139,13 +12143,13 @@ function queueNativeTextEdit(block) {
 						setStatus(
 							currentLocale() === 'fr'
 								? 'Cette frappe a été refusée pour préserver exactement le PDF.'
-								: 'This keystroke was rejected to preserve the PDF exactly.',
+								: t('extra415'),
 							'info'
 						);
 						return;
 					}
 					// Repli : édition HTML classique (police métrique-compatible).
-					console.warn('Édition native indisponible, repli HTML.', error);
+					console.warn(t('extra416'), error);
 					try {
 						const indices = (Array.isArray(block.pdfChars) ? block.pdfChars : [])
 							.map((ch) => ch.pageCharIndex)
@@ -12294,7 +12298,7 @@ async function syncNativeDocumentBytes(options = {}) {
 			}
 			return true;
 		} catch (error) {
-			console.warn('Synchronisation du document édité impossible.', error);
+			console.warn(t('extra417'), error);
 			return false;
 		} finally {
 			state._nativeSyncPromise = null;
@@ -12530,7 +12534,7 @@ function commitGlyphEdit(block, newText, caretOffset) {
 			setStatus(
 				currentLocale() === 'fr'
 					? 'Ajout ou suppression de ligne non supporté sur ce texte PDF.'
-					: 'Adding or removing lines is not supported on this PDF text.',
+					: t('extra419'),
 				'info'
 			);
 			return;
@@ -12959,8 +12963,8 @@ function startInlineEdit(id, opts = {}) {
 		const base = baseFamilyName(cleanFontName(block.fontName)) || '';
 		setStatus(
 			base
-				? `Logo non éditable (police « ${base} » non détectée). Vous pouvez le déplacer.`
-				: 'Logo non éditable. Vous pouvez le déplacer.',
+				? `${t("fragment295")}${base}${t("fragment296")}`
+				: t('extra422'),
 			'info'
 		);
 		selectEditBlock(id);
@@ -13264,7 +13268,7 @@ function updateFormatPanel(block) {
 	}
 
 	const detected = cleanFontName(block.fontName);
-	_fontComboAutoLabel = detected ? `Auto : ${detected}` : 'Police détectée';
+	_fontComboAutoLabel = detected ? `${t("fragment300")}${detected}` : t('extra423');
 	if (detected) ensureCloudFont(baseFamilyName(detected));
 
 	setFontComboValue(block.fontFamilyOverride || '');
@@ -13372,11 +13376,11 @@ function updateFontWarning(detected) {
 		icon.textContent = '!';
 		const label = document.createElement('span');
 		label.className = 'format-font-warning-label';
-		label.textContent = `Police « ${base} » non installée`;
+		label.textContent = `${t("fragment302")}${base}${t("fragment303")}`;
 		const link = document.createElement('button');
 		link.type = 'button';
 		link.className = 'format-font-warning-link';
-		link.textContent = 'Télécharger';
+		link.textContent = "Скачать";
 		link.addEventListener('click', () => {
 			invokeCommand('open_external', { url: `https://fonts.google.com/?query=${query}` }).catch(() => {});
 		});
@@ -14456,7 +14460,7 @@ function activateAddTextTool() {
 	}
 	if (!state.editMode) toggleEditMode(true);
 	setEditTool('add-text');
-	setStatus(currentLocale() === 'fr' ? 'Cliquez dans la page pour ajouter du texte.' : 'Click the page to add text.');
+	setStatus(currentLocale() === 'fr' ? 'Cliquez dans la page pour ajouter du texte.' : t('extra427'));
 }
 
 function bytesToImageDataUrl(bytes) {
@@ -14508,7 +14512,7 @@ async function activateAddImageTool() {
 		setStatus(
 			currentLocale() === 'fr'
 				? 'Clique sur la page pour placer l’image.'
-				: 'Click the page to place the image.'
+				: t('extra429')
 		);
 	} catch (error) {
 		console.error(error);
@@ -14527,7 +14531,7 @@ function activateAddSignatureTool() {
 	setStatus(
 		currentLocale() === 'fr'
 			? 'Choisis une signature ou un paraphe, puis clique sur la page pour le poser.'
-			: 'Pick a saved signature or initials, then click the page to place it.'
+			: t('extra431')
 	);
 }
 
@@ -14791,16 +14795,16 @@ function updateUi(renderPanels = true) {
 	elements.app.classList.toggle('rail-hidden', !state.settings.showRail);
 	elements.documentName.textContent = state.fileName || t('noPdfOpen');
 	elements.documentMeta.textContent = hasPdf
-		? `${state.pdf.numPages} pages · ${bytesToMb(state.fileBytes.byteLength)}`
+		? `${state.pdf.numPages} ${pluralRu(state.pdf.numPages, "страница", "страницы", "страниц")} · ${bytesToMb(state.fileBytes.byteLength)}`
 		: t('dropPdf');
 	elements.openButton.textContent = hasPdf ? t('openAnother') : t('open');
-	elements.openButton.setAttribute('aria-label', hasPdf ? 'Open another PDF' : 'Open PDF');
+	elements.openButton.setAttribute('aria-label', hasPdf ? t('extra435') : t('extra436'));
 	elements.chooseEmpty.querySelector('span:last-child').textContent = hasPdf ? t('openAnother') : t('openPdf');
 	elements.pageLabel.textContent = hasPdf ? `${state.page} / ${state.pdf.numPages}` : '0 / 0';
 	elements.zoomLabel.textContent = `${Math.round(state.zoom * 100)}%`;
 	elements.pageSummaryTitle.textContent = hasPdf ? state.fileName : t('noDocument');
 	elements.pageSummaryMeta.textContent = hasPdf
-		? `Page ${state.page} of ${state.pdf.numPages}. Current zoom: ${Math.round(state.zoom * 100)}%.`
+		? `${t("fragment338")}${state.page}${t("fragment339")}${state.pdf.numPages}${t("fragment340")}${Math.round(state.zoom * 100)}%.`
 		: t('pageSummaryEmpty');
 	persistCurrentTabState();
 	renderTabs();
@@ -14944,7 +14948,7 @@ async function handleSaveDocument() {
 	try {
 		const tab = currentTab();
 		if (tab && tab.dirty) {
-			setStatus(currentLocale() === 'fr' ? 'Enregistrement…' : 'Saving…');
+			setStatus(currentLocale() === 'fr' ? 'Enregistrement…' : t('extra438'));
 		}
 		if (state.nativeTextDirty) await syncNativeDocumentBytes({ render: false });
 		const bytes = new Uint8Array(await currentDocumentBytes());
@@ -14964,7 +14968,7 @@ async function handleSaveDocument() {
 		return Boolean(savedPath);
 	} catch (error) {
 		console.error(error);
-		setStatus(error instanceof Error ? error.message : 'Enregistrement impossible.', 'error');
+		setStatus(error instanceof Error ? error.message : t('extra439'), 'error');
 		return false;
 	}
 }
@@ -14981,7 +14985,7 @@ async function handleSaveAsDocument() {
 		return Boolean(savedPath);
 	} catch (error) {
 		console.error(error);
-		setStatus(error instanceof Error ? error.message : 'Enregistrement impossible.', 'error');
+		setStatus(error instanceof Error ? error.message : t('extra440'), 'error');
 		return false;
 	}
 }
@@ -14993,9 +14997,9 @@ function suggestFileName(baseSuffix, defaultName = 'alto.pdf') {
 }
 
 function humanFileSize(bytes) {
-	if (bytes < 1024) return `${bytes} B`;
-	if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-	return `${(bytes / 1024 / 1024).toFixed(2)} MB`;
+	if (bytes < 1024) return `${bytes}${t("fragment343")}`;
+	if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)}${t("fragment344")}`;
+	return `${(bytes / 1024 / 1024).toLocaleString("ru-RU", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}${t("fragment345")}`;
 }
 
 async function handleCombineFiles() {
@@ -15368,7 +15372,7 @@ async function handleAutoRedact() {
 		help: t('autoRedactHelp'),
 		confirm: t('redactCta'),
 		fields: [
-			{ id: 'terms', label: t('autoRedactTerms'), type: 'text', placeholder: 'Dupont, 06 12 34 56 78' },
+			{ id: 'terms', label: t('autoRedactTerms'), type: 'text', placeholder: t('extra442') },
 			{ id: 'matchCase', label: t('matchCase'), type: 'checkbox', value: false }
 		]
 	});
@@ -15727,7 +15731,7 @@ async function handleDeskewPdf() {
 		}
 		await replaceDocumentStructure(new Uint8Array(result.bytes), { focusPage: state.page });
 		const summary = corrected
-			.map((entry) => `p.${entry.page} (${entry.angle > 0 ? '+' : ''}${entry.angle.toFixed(1)}°)`)
+			.map((entry) => `${t("fragment346")}${entry.page} (${entry.angle > 0 ? '+' : ''}${entry.angle.toFixed(1)}°)`)
 			.join(', ');
 		const fmt = t('deskewDone');
 		setStatus(typeof fmt === 'function' ? fmt(summary) : fmt);
@@ -15809,11 +15813,11 @@ function resetDialogPosition(dialog) {
 }
 
 function printSettingsKey(printerName) {
-	return `slate:print-settings:${printerName || 'default'}`;
+	return `slate-ru:print-settings:${printerName || 'default'}`;
 }
 
 /** Dernière imprimante réellement choisie pour imprimer — pas le défaut système. */
-const PRINT_LAST_PRINTER_KEY = 'slate:print-last-printer';
+const PRINT_LAST_PRINTER_KEY = 'slate-ru:print-last-printer';
 
 function loadLastPrinterName() {
 	try {
@@ -16035,13 +16039,13 @@ function renderFitLabelSummary(fit) {
 	}
 	const percent = Math.round(fit.scale * 100);
 	const parts = [
-		`Document ${formatPrintMm(fit.sourceWidthPt)} × ${formatPrintMm(fit.sourceHeightPt)} mm,`,
-		percent >= 100 ? 'imprimé à 100 %' : `réduit à ${percent} %`,
-		`pour tenir sur ${formatPrintMm(fit.paperWidthPt)} × ${formatPrintMm(fit.paperHeightPt)} mm`
+		`${t("fragment356")}${formatPrintMm(fit.sourceWidthPt)} × ${formatPrintMm(fit.sourceHeightPt)}${t("fragment358")}`,
+		percent >= 100 ? t('extra443') : `${t("fragment359")}${percent} %`,
+		`${t("fragment360")}${formatPrintMm(fit.paperWidthPt)} × ${formatPrintMm(fit.paperHeightPt)}${t("fragment362")}`
 	];
 	if (fit.compactedGutters > 0) {
 		parts.push(
-			`· ${fit.compactedGutters} espace${fit.compactedGutters > 1 ? 's' : ''} vide${fit.compactedGutters > 1 ? 's' : ''} resserré${fit.compactedGutters > 1 ? 's' : ''}`
+			`· ${fit.compactedGutters}${t("fragment363")}${t("fragment364")}${t("fragment365")}`
 		);
 	}
 	summary.textContent = parts.join(' ');
@@ -16060,12 +16064,12 @@ function findPaperSourceOption() {
 function paperSourceLabel(choice) {
 	const id = String(choice?.id || '');
 	const lower = id.toLowerCase();
-	if (lower === 'auto') return 'Auto';
+	if (lower === 'auto') return t('extra444');
 	if (lower.includes('by-pass') || lower.includes('bypass') || lower.includes('manual')) {
-		return 'Bac manuel';
+		return t('extra445');
 	}
 	const tray = lower.match(/(?:tray|cassette|bac)[_-]?(\d+)/);
-	if (tray) return `BAC ${tray[1]}`;
+	if (tray) return `${t("fragment366")}${tray[1]}`;
 	if (choice?.label && choice.label !== choice.id) return choice.label;
 	return id;
 }
@@ -16151,7 +16155,7 @@ function updatePrintAdvancedButton() {
 	if (elements.printAdvancedOpen) {
 		elements.printAdvancedOpen.disabled = available === 0;
 		elements.printAdvancedOpen.textContent =
-			count > 0 ? `Options avancées (${count})` : 'Options avancées';
+			count > 0 ? `${t("fragment367")}${count})` : t('extra447');
 	}
 	if (elements.printLayoutFocus) {
 		elements.printLayoutFocus.disabled = available === 0;
@@ -16167,7 +16171,7 @@ function renderPrintAdvanced() {
 		const empty = document.createElement('p');
 		empty.className = 'print-advanced-empty';
 		empty.textContent =
-			'Cette imprimante n’expose aucun réglage supplémentaire via CUPS.';
+			t('extra448');
 		body.appendChild(empty);
 		return;
 	}
@@ -16181,7 +16185,7 @@ function renderPrintAdvanced() {
 			const item = document.createElement('option');
 			item.value = choice.id;
 			item.textContent = choice.isDefault
-				? `${choice.label} (défaut)`
+				? `${choice.label}${t("fragment368")}`
 				: choice.label;
 			select.appendChild(item);
 		}
@@ -16222,7 +16226,7 @@ function closePrintAdvanced() {
 function setPrintError(message) {
 	if (!elements.printError) return;
 	if (message) {
-		elements.printError.textContent = message;
+		elements.printError.textContent = localizeError(message);
 		elements.printError.classList.remove('hidden');
 	} else {
 		elements.printError.textContent = '';
@@ -16264,7 +16268,7 @@ async function getPrintPageSizePts(pageNumber) {
 
 function formatPrintMm(pts) {
 	const mm = (pts * 25.4) / 72;
-	return mm.toLocaleString('fr-FR', { maximumFractionDigits: 2 });
+	return mm.toLocaleString('ru-RU', { maximumFractionDigits: 2 });
 }
 
 /**
@@ -16380,7 +16384,7 @@ async function renderPrintPreview() {
 	const total = state.pdf.numPages || 1;
 	_printPreviewPage = Math.max(1, Math.min(total, _printPreviewPage || 1));
 	if (elements.printPreviewPage) {
-		elements.printPreviewPage.textContent = `Page ${_printPreviewPage} sur ${total}`;
+		elements.printPreviewPage.textContent = `${t("fragment369")}${_printPreviewPage}${t("fragment370")}${total}`;
 	}
 	if (elements.printPreviewPrev) elements.printPreviewPrev.disabled = _printPreviewPage <= 1;
 	if (elements.printPreviewNext) elements.printPreviewNext.disabled = _printPreviewPage >= total;
@@ -16417,10 +16421,10 @@ async function renderPrintPreview() {
 		);
 
 		if (elements.printDimsLabel) {
-			elements.printDimsLabel.textContent = `${formatPrintMm(base.width)} × ${formatPrintMm(base.height)} mm`;
+			elements.printDimsLabel.textContent = `${formatPrintMm(base.width)} × ${formatPrintMm(base.height)}${t("fragment372")}`;
 		}
 		if (elements.printScaleLabel) {
-			elements.printScaleLabel.textContent = `Échelle : ${Math.round(placement.scale * 100)} %`;
+			elements.printScaleLabel.textContent = `${t("fragment373")}${Math.round(placement.scale * 100)} %`;
 		}
 
 		const maxWidth = 360;
@@ -16501,10 +16505,10 @@ async function drawFittedLabelPreview(canvas, fit, token) {
 	if (token !== _printPreviewRenderToken) return;
 
 	if (elements.printDimsLabel) {
-		elements.printDimsLabel.textContent = `${formatPrintMm(base.width)} × ${formatPrintMm(base.height)} mm`;
+		elements.printDimsLabel.textContent = `${formatPrintMm(base.width)} × ${formatPrintMm(base.height)}${t("fragment379")}`;
 	}
 	if (elements.printScaleLabel) {
-		elements.printScaleLabel.textContent = `Échelle : ${Math.round(fit.scale * 100)} %`;
+		elements.printScaleLabel.textContent = `${t("fragment380")}${Math.round(fit.scale * 100)} %`;
 	}
 	renderFitLabelSummary(fit);
 }
@@ -16554,7 +16558,7 @@ async function openPrintModal() {
 		return;
 	}
 	if (!window.__TAURI__) {
-		setStatus('Impression disponible dans l’app desktop.', 'error');
+		setStatus(t('extra451'), 'error');
 		return;
 	}
 	setPrintError('');
@@ -16583,8 +16587,8 @@ async function openPrintModal() {
 		for (const printer of list) {
 			const opt = document.createElement('option');
 			opt.value = printer.name;
-			const ready = printer.isReady === false ? ' · hors ligne' : '';
-			opt.textContent = `${printer.displayName || printer.name}${printer.isDefault ? ' (défaut)' : ''}${ready}`;
+			const ready = printer.isReady === false ? t('extra452') : '';
+			opt.textContent = `${printer.displayName || printer.name}${printer.isDefault ? t('extra453') : ''}${ready}`;
 			elements.printPrinter.appendChild(opt);
 		}
 		// Dernière imprimante utilisée d’abord ; défaut système seulement si
@@ -16786,7 +16790,7 @@ async function handleExportPageImage() {
 		canvas.width = Math.floor(viewport.width);
 		canvas.height = Math.floor(viewport.height);
 		const ctx = canvas.getContext('2d', { alpha: false });
-		if (!ctx) throw new Error('Canvas indisponible.');
+		if (!ctx) throw new Error(t('extra454'));
 		ctx.fillStyle = '#ffffff';
 		ctx.fillRect(0, 0, canvas.width, canvas.height);
 		await page.render({ canvasContext: ctx, viewport, annotationStorage: state.pdf.annotationStorage })
@@ -16794,7 +16798,7 @@ async function handleExportPageImage() {
 		const mime = format === 'png' ? 'image/png' : 'image/jpeg';
 		const quality = format === 'png' ? undefined : 0.95;
 		const blob = await new Promise((resolve) => canvas.toBlob(resolve, mime, quality));
-		if (!blob) throw new Error('Encodage image impossible.');
+		if (!blob) throw new Error(t('extra455'));
 		const bytes = new Uint8Array(await blob.arrayBuffer());
 		const filename = suggestFileName(`page-${state.page}`, `alto-page-${state.page}.${format}`)
 			.replace(/\.pdf$/i, `.${format}`);
@@ -16810,7 +16814,7 @@ function openFormatChoice(formats) {
 		const choice = window.prompt(
 			currentLocale() === 'fr'
 				? `Format d'export (${formats.join(' / ')}) :`
-				: `Export format (${formats.join(' / ')}):`,
+				: `${t("fragment384")}${formats.join(' / ')}):`,
 			formats[0]
 		);
 		if (!choice) {
@@ -16876,7 +16880,7 @@ function formatPageSize(widthPts, heightPts) {
 		}
 	}
 	const round = (value) => (Math.abs(value - Math.round(value)) < 0.05 ? String(Math.round(value)) : value.toFixed(1));
-	return `${round(widthMm)} × ${round(heightMm)} mm${label}`;
+	return `${round(widthMm)} × ${round(heightMm)}${t("fragment386")}${label}`;
 }
 
 function formatPdfVersionLabel(version) {
@@ -16898,17 +16902,17 @@ function formatPdfVersionLabel(version) {
 function formatFileSizeAcrobat(bytes) {
 	const size = Number(bytes) || 0;
 	const mo = size / (1024 * 1024);
-	const moLabel = mo.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-	const octets = Math.round(size).toLocaleString('de-DE');
-	return `${moLabel} Mo (${octets} octets)`;
+	const moLabel = mo.toLocaleString('ru-RU', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+	const octets = Math.round(size).toLocaleString('ru-RU');
+	return `${moLabel}${t("fragment387")}${octets}${t("fragment388")}`;
 }
 
 function yesNo(value) {
-	return value ? 'Oui' : 'Non';
+	return value ? t('extra466') : t('extra467');
 }
 
 function allowedLabel(allowed) {
-	return allowed ? 'Autorisée' : 'Non autorisée';
+	return allowed ? "Разрешено" : t('extra468');
 }
 
 function setPropsTab(tabId) {
@@ -16954,7 +16958,7 @@ function showPropertiesModal(props, pageFormat) {
 	setText('props-tagged', yesNo(Boolean(props.tagged)));
 	setText('props-linearized', yesNo(Boolean(props.linearized)));
 
-	setText('props-security-method', props.securityMethod || (props.encrypted ? 'Mot de passe' : 'Aucune'));
+	setText('props-security-method', props.securityMethod || (props.encrypted ? t('extra469') : t('extra470')));
 	setText('props-perm-print', allowedLabel(Boolean(props.canPrint)));
 	setText('props-perm-modify', allowedLabel(Boolean(props.canModify)));
 	setText('props-perm-assemble', allowedLabel(Boolean(props.canModify)));
@@ -16963,24 +16967,24 @@ function showPropertiesModal(props, pageFormat) {
 	setText('props-perm-forms', allowedLabel(Boolean(props.canAnnotate)));
 
 	const layoutMap = {
-		SinglePage: 'Une seule page',
-		OneColumn: 'Une colonne',
-		TwoColumnLeft: 'Deux colonnes (gauche)',
-		TwoColumnRight: 'Deux colonnes (droite)',
-		TwoPageLeft: 'Deux pages (gauche)',
-		TwoPageRight: 'Deux pages (droite)'
+		SinglePage: t('extra471'),
+		OneColumn: t('extra472'),
+		TwoColumnLeft: t('extra473'),
+		TwoColumnRight: t('extra474'),
+		TwoPageLeft: t('extra475'),
+		TwoPageRight: t('extra476')
 	};
 	const modeMap = {
-		UseNone: 'Page seule',
-		UseOutlines: 'Signets et page',
-		UseThumbs: 'Vignettes et page',
-		FullScreen: 'Plein écran',
-		UseOC: 'Calques et page',
-		UseAttachments: 'Pièces jointes et page'
+		UseNone: t('extra477'),
+		UseOutlines: t('extra478'),
+		UseThumbs: t('extra479'),
+		FullScreen: t('extra480'),
+		UseOC: t('extra481'),
+		UseAttachments: t('extra482')
 	};
-	setText('props-page-layout', layoutMap[props.pageLayout] || props.pageLayout || 'Par défaut');
-	setText('props-page-mode', modeMap[props.pageMode] || props.pageMode || 'Par défaut');
-	setText('props-trapped', props.trapped || 'Non spécifié');
+	setText('props-page-layout', layoutMap[props.pageLayout] || props.pageLayout || t('extra483'));
+	setText('props-page-mode', modeMap[props.pageMode] || props.pageMode || t('extra484'));
+	setText('props-trapped', props.trapped || t('extra485'));
 
 	const fontsList = document.getElementById('props-fonts-list');
 	if (fontsList) {
@@ -16988,17 +16992,17 @@ function showPropertiesModal(props, pageFormat) {
 		const fonts = Array.isArray(props.fonts) ? props.fonts : [];
 		if (!fonts.length) {
 			const empty = document.createElement('li');
-			empty.textContent = 'Aucune police détectée dans ce document.';
+			empty.textContent = t('extra486');
 			fontsList.append(empty);
 		} else {
 			for (const font of fonts) {
 				const li = document.createElement('li');
 				const name = document.createElement('span');
 				name.className = 'font-name';
-				name.textContent = font.name || 'Sans nom';
+				name.textContent = font.name || t('extra487');
 				const meta = document.createElement('span');
 				meta.className = 'font-meta';
-				const bits = [font.subtype || null, font.encoding || null, font.embedded ? 'Incorporée' : 'Non incorporée'].filter(Boolean);
+				const bits = [font.subtype || null, font.encoding || null, font.embedded ? "Встроен" : t('extra488')].filter(Boolean);
 				meta.textContent = bits.join(' · ');
 				li.append(name, meta);
 				fontsList.append(li);
@@ -17064,7 +17068,7 @@ async function applyPropertiesModal() {
 			subject,
 			keywords
 		});
-		if (!bytes?.length) throw new Error('Métadonnées non enregistrées.');
+		if (!bytes?.length) throw new Error(t('extra489'));
 		state.fileBytes = bytes;
 		const tab = currentTab();
 		if (tab) tab.fileBytes = bytes;
@@ -17076,7 +17080,7 @@ async function applyPropertiesModal() {
 		invalidateAllPages();
 		await renderCurrentPage();
 		closePropertiesModal();
-		setStatus('Métadonnées mises à jour.', 'info');
+		setStatus(t('extra490'), 'info');
 	} catch (error) {
 		console.error(error);
 		setStatus(error instanceof Error ? error.message : String(error), 'error');
@@ -17099,7 +17103,7 @@ function formatPdfDate(raw) {
 		)
 	);
 	if (isNaN(date.getTime())) return raw;
-	return date.toLocaleString(currentLocale() === 'fr' ? 'fr-FR' : 'en-US');
+	return date.toLocaleString(currentLocale() === 'ru' ? 'ru-RU' : currentLocale() === 'fr' ? 'fr-FR' : 'en-US');
 }
 
 const RECENT_FILES_KEY = 'alto-recent-files';
@@ -17280,7 +17284,7 @@ function handleShowRecent() {
 	if (!list.length) {
 		const li = document.createElement('li');
 		li.className = 'recent-empty';
-		li.textContent = currentLocale() === 'fr' ? 'Aucun fichier récent.' : 'No recent files.';
+		li.textContent = currentLocale() === 'fr' ? 'Aucun fichier récent.' : t('extra493');
 		elements.recentList.append(li);
 	} else {
 		for (const item of list) {
@@ -17311,7 +17315,7 @@ async function openRecentFile(item) {
 		setStatus(
 			currentLocale() === 'fr'
 				? 'Fichier non localisé — rouvrez-le via « Ouvrir ».'
-				: 'File location unknown — reopen it via “Open”.',
+				: t('extra495'),
 			'error'
 		);
 		return;
@@ -17336,7 +17340,7 @@ async function openRecentFile(item) {
 
 function notifyRecentMissing() {
 	setStatus(
-		currentLocale() === 'fr' ? 'Fichier manquant ou déplacé.' : 'File missing or moved.',
+		currentLocale() === 'fr' ? 'Fichier manquant ou déplacé.' : t('extra497'),
 		'error'
 	);
 }
@@ -17346,8 +17350,8 @@ function homeGreetingText() {
 	const hour = new Date().getHours();
 	const fr = currentLocale() === 'fr';
 	let salutation;
-	if (hour < 18) salutation = fr ? 'Bonjour' : hour < 12 ? 'Good morning' : 'Hello';
-	else salutation = fr ? 'Bonsoir' : 'Good evening';
+	if (hour < 18) salutation = fr ? 'Bonjour' : hour < 12 ? t('extra499') : t('extra500');
+	else salutation = fr ? 'Bonsoir' : t('extra502');
 	const name = (state.settings.identityName || '').trim();
 	const first = name ? name.split(/\s+/)[0] : '';
 	return first ? `${salutation}, ${first}` : salutation;
@@ -17368,9 +17372,9 @@ function formatRecentDate(timestamp) {
 	const now = new Date();
 	const sameDay = date.toDateString() === now.toDateString();
 	if (sameDay) {
-		return date.toLocaleTimeString(fr ? 'fr-FR' : 'en-US', { hour: '2-digit', minute: '2-digit' });
+		return date.toLocaleTimeString(currentLocale() === 'ru' ? 'ru-RU' : fr ? 'fr-FR' : 'en-US', { hour: '2-digit', minute: '2-digit' });
 	}
-	return date.toLocaleDateString(fr ? 'fr-FR' : 'en-US', { day: 'numeric', month: 'short' });
+	return date.toLocaleDateString(currentLocale() === 'ru' ? 'ru-RU' : fr ? 'fr-FR' : 'en-US', { day: 'numeric', month: 'short' });
 }
 
 function refreshProfileAvatar() {
@@ -17421,7 +17425,7 @@ function renderHome() {
 		empty.textContent =
 			currentLocale() === 'fr'
 				? 'Aucun fichier récent. Ouvrez un PDF pour commencer.'
-				: 'No recent files yet. Open a PDF to get started.';
+				: t('extra504');
 		body.append(empty);
 		return;
 	}
@@ -17467,7 +17471,7 @@ function renderHome() {
 		remove.className = 'recent-card-remove';
 		remove.setAttribute('role', 'button');
 		remove.tabIndex = 0;
-		remove.title = currentLocale() === 'fr' ? 'Retirer des récents' : 'Remove from recents';
+		remove.title = currentLocale() === 'fr' ? 'Retirer des récents' : t('extra506');
 		remove.setAttribute('aria-label', remove.title);
 		remove.innerHTML =
 			'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6 18 18M18 6 6 18"/></svg>';
@@ -17511,11 +17515,11 @@ function revealInFolderLabel() {
 	const fr = currentLocale() === 'fr';
 	switch (hostPlatform()) {
 		case 'mac':
-			return fr ? 'Afficher dans le Finder' : 'Show in Finder';
+			return fr ? 'Afficher dans le Finder' : t('extra509');
 		case 'windows':
-			return fr ? 'Afficher dans l’Explorateur' : 'Show in Explorer';
+			return fr ? 'Afficher dans l’Explorateur' : t('extra511');
 		default:
-			return fr ? 'Afficher dans le dossier' : 'Show in folder';
+			return fr ? 'Afficher dans le dossier' : t('extra513');
 	}
 }
 
@@ -17561,7 +17565,7 @@ async function revealRecentFile(item) {
 		setStatus(
 			currentLocale() === 'fr'
 				? 'Fichier introuvable : il a été déplacé ou supprimé.'
-				: 'File not found: it was moved or deleted.',
+				: t('extra517'),
 			'error'
 		);
 	}
@@ -17571,14 +17575,14 @@ function openRecentContextMenu(x, y, item, onRemove) {
 	const el = recentContextMenuRoot();
 	const fr = currentLocale() === 'fr';
 	const entries = [
-		{ label: fr ? 'Ouvrir' : 'Open', action: () => void openRecentFile(item) },
+		{ label: fr ? 'Ouvrir' : t('extra519'), action: () => void openRecentFile(item) },
 		{
 			label: revealInFolderLabel(),
 			disabled: !item.path,
 			action: () => void revealRecentFile(item)
 		},
 		{ separator: true },
-		{ label: fr ? 'Retirer des récents' : 'Remove from recents', danger: true, action: onRemove }
+		{ label: fr ? 'Retirer des récents' : t('extra521'), danger: true, action: onRemove }
 	];
 	el.replaceChildren();
 	for (const entry of entries) {
@@ -17951,26 +17955,26 @@ function buildExportAuditReport() {
 		const strategy = exportStrategyForPage(pageNumber);
 		strategies.push(strategy);
 		if (strategy.mode === 'flatten_page') {
-			warnings.push(`Page ${pageNumber} aplatie (${strategy.reason}) : texte non sélectionnable sur cette page.`);
+			warnings.push(`${t("fragment398")}${pageNumber}${t("fragment399")}${strategy.reason}${t("fragment400")}`);
 		}
 	}
 	for (const block of state.editBlocks) {
 		const dirty = block.hidden || block.added || isBlockDirty(block);
 		if (!dirty) continue;
 		if (block.critical) {
-			const action = block.hidden ? 'masqué/supprimé' : 'modifié';
-			warnings.push(`Champ critique ${fieldLabel(block.fieldKind)} ${action} page ${block.page}.`);
+			const action = block.hidden ? "скрыто/удалено" : "изменено";
+			warnings.push(`${t("fragment401")}${fieldLabel(block.fieldKind)} ${action}${t("fragment402")}${block.page}.`);
 		}
 		if (block.source === 'ocr' && Number(block.confidence ?? 100) < 70) {
-			warnings.push(`Bloc OCR faible confiance exporté page ${block.page}.`);
+			warnings.push(`${t("fragment403")}${block.page}.`);
 		} else if (block.source === 'ocr' && canVectorEditBlock(block)) {
-			warnings.push(`Bloc OCR page ${block.page} exporté en couche texte PDF native.`);
+			warnings.push(`${t("fragment404")}${block.page}${t("fragment405")}`);
 		}
 	}
 	const totalsChanged = state.editBlocks.some((block) => block.fieldKind === 'total' && isBlockDirty(block));
 	const taxChanged = state.editBlocks.some((block) => block.fieldKind === 'tax' && isBlockDirty(block));
 	if (totalsChanged && !taxChanged) {
-		warnings.push('Total modifié sans TVA associée modifiée.');
+		warnings.push(t('extra525'));
 	}
 	return {
 		warnings: Array.from(new Set(warnings)).slice(0, 8),
@@ -17981,11 +17985,11 @@ function buildExportAuditReport() {
 function confirmExportAudit(report) {
 	if (!report?.warnings?.length) return true;
 	const message = [
-		'Audit avant export :',
+		t('extra526'),
 		'',
 		...report.warnings.map((warning) => `- ${warning}`),
 		'',
-		'Continuer quand même ?'
+		t('extra527')
 	].join('\n');
 	return window.confirm(message);
 }
@@ -18149,7 +18153,7 @@ async function exportEditedPdfBytes(options = {}) {
 	if (options.audit) {
 		const report = buildExportAuditReport();
 		if (!confirmExportAudit(report)) {
-			throw new Error('Export annulé après audit.');
+			throw new Error(t('extra528'));
 		}
 	}
 	await ensureEditorFontsReady();
@@ -18220,7 +18224,7 @@ async function renderFlattenedPage(pageNumber) {
 	const viewport = page.getViewport({ scale: 3 });
 	const canvas = document.createElement('canvas');
 	const context = canvas.getContext('2d');
-	if (!context) throw new Error('Unable to create export canvas.');
+	if (!context) throw new Error(t('extra533'));
 
 	canvas.width = Math.round(viewport.width);
 	canvas.height = Math.round(viewport.height);
@@ -18528,7 +18532,7 @@ async function canvasToJpegBytes(canvas) {
 }
 
 async function blobToBytes(blob) {
-	if (!blob) throw new Error('Unable to encode page image.');
+	if (!blob) throw new Error(t('extra536'));
 	return new Uint8Array(await blob.arrayBuffer());
 }
 
@@ -18594,7 +18598,7 @@ function formatHistoryTime(ts) {
 		date.getFullYear() === now.getFullYear() &&
 		date.getMonth() === now.getMonth() &&
 		date.getDate() === now.getDate();
-	const locale = currentLocale() === 'fr' ? 'fr-FR' : 'en-US';
+	const locale = currentLocale() === 'ru' ? 'ru-RU' : currentLocale() === 'fr' ? 'fr-FR' : 'en-US';
 	const time = date.toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' });
 	if (sameDay) return time;
 	return `${date.toLocaleDateString(locale, { day: 'numeric', month: 'short' })} ${time}`;
@@ -19021,7 +19025,7 @@ async function renderFormsPanel() {
 	try {
 		fields = await collectFormFields();
 	} catch (error) {
-		elements.formsEmpty.textContent = String(error.message || error);
+		elements.formsEmpty.textContent = localizeError(error);
 		elements.formsEmpty.classList.remove('hidden');
 		return;
 	}
@@ -19118,14 +19122,14 @@ async function renderFormsPanel() {
 			const button = document.createElement('button');
 			button.type = 'button';
 			button.className = 'forms-field-image';
-			button.textContent = isFr ? 'Choisir une image…' : 'Choose an image…';
+			button.textContent = isFr ? 'Choisir une image…' : t('extra545');
 			button.addEventListener('click', () => void handleFormImageButton(field.name));
 			row.append(button);
 		} else if (field.kind === 'signature') {
 			const button = document.createElement('button');
 			button.type = 'button';
 			button.className = 'forms-field-image';
-			button.textContent = isFr ? 'Signer…' : 'Sign…';
+			button.textContent = isFr ? 'Signer…' : t('extra547');
 			button.addEventListener('click', () => void handleFormSignatureField(field.name));
 			row.append(button);
 		}
@@ -19170,7 +19174,8 @@ function syncSettingsForm() {
 	elements.settingDefaultZoom.value = String(state.settings.defaultZoom);
 	elements.settingPageLayout.value = state.settings.pageLayout === 'single' ? 'single' : 'continuous';
 	if (elements.settingAutoSave) elements.settingAutoSave.checked = state.settings.autoSave !== false;
-	if (elements.settingAutoUpdate) elements.settingAutoUpdate.checked = Boolean(state.settings.autoUpdate);
+	if (elements.settingAutoUpdate) elements.settingAutoUpdate.checked = false;
+ if (elements.settingAutoUpdate) elements.settingAutoUpdate.disabled = true;
 	elements.settingFitWidth.checked = state.settings.fitWidth;
 	elements.settingShowTools.checked = state.settings.showTools;
 	elements.settingShowRail.checked = state.settings.showRail;
@@ -19191,7 +19196,7 @@ function applySettingsFromForm() {
 	state.settings.defaultZoom = Number(elements.settingDefaultZoom.value);
 	state.settings.pageLayout = elements.settingPageLayout.value === 'single' ? 'single' : 'continuous';
 	state.settings.autoSave = elements.settingAutoSave ? elements.settingAutoSave.checked : true;
-	state.settings.autoUpdate = elements.settingAutoUpdate ? elements.settingAutoUpdate.checked : false;
+	state.settings.autoUpdate = false;
 	state.settings.fitWidth = elements.settingFitWidth.checked;
 	state.settings.showTools = elements.settingShowTools.checked;
 	state.settings.showRail = elements.settingShowRail.checked;
@@ -19250,7 +19255,7 @@ async function saveAiConfigFromSettings() {
 
 function clearLocalNotes() {
 	for (const key of Object.keys(localStorage)) {
-		if (key.startsWith('alto-pdf-reader:')) {
+		if (key.startsWith('slate-ru-reader:')) {
 			localStorage.removeItem(key);
 		}
 	}
@@ -19336,7 +19341,7 @@ function bindTauriMenuEvents() {
 		setStatus(
 			currentLocale() === 'fr'
 				? 'Cette commande de menu sera ajoutée dans une prochaine version.'
-				: 'This menu command will be added in a future version.',
+				: t('extra549'),
 			'error'
 		)
 	);
@@ -19528,7 +19533,7 @@ async function openConvertColorsModal() {
 	openPrepressPanel();
 	const statusEl = elements.convertColorsProfileStatus;
 	if (statusEl) {
-		statusEl.textContent = 'Recherche du profil ICC…';
+		statusEl.textContent = t('extra554');
 		statusEl.dataset.tone = '';
 	}
 	elements.convertColorsBackdrop?.classList.remove('hidden');
@@ -19537,19 +19542,19 @@ async function openConvertColorsModal() {
 		const info = await invokeCommand('fogra39_profile_status');
 		if (statusEl) {
 			if (info) {
-				statusEl.textContent = `Profil trouvé : ${info}`;
+				statusEl.textContent = `${t("fragment414")}${info}`;
 				statusEl.dataset.tone = 'ok';
 				elements.convertColorsOk.disabled = false;
 			} else {
 				statusEl.textContent =
-					'Profil Coated FOGRA39 introuvable. Installe Acrobat (profil Adobe) ou place ISOcoated_v2_eci.icc dans ~/Library/ColorSync/Profiles/.';
+					t('extra555');
 				statusEl.dataset.tone = 'error';
 				elements.convertColorsOk.disabled = true;
 			}
 		}
 	} catch (error) {
 		if (statusEl) {
-			statusEl.textContent = error instanceof Error ? error.message : String(error);
+			statusEl.textContent = localizeError(error);
 			statusEl.dataset.tone = 'error';
 		}
 		if (elements.convertColorsOk) elements.convertColorsOk.disabled = true;
@@ -19574,7 +19579,7 @@ async function applyConvertColorsFogra39() {
 			bytes: Array.from(state.fileBytes),
 			iccPath: null
 		});
-		if (!bytes?.length) throw new Error('Conversion sans résultat.');
+		if (!bytes?.length) throw new Error(t('extra556'));
 		state.fileBytes = bytes;
 		const tab = currentTab();
 		if (tab) tab.fileBytes = bytes;
@@ -19663,7 +19668,7 @@ function buildShareMessage(path) {
 	const name = state.fileName || 'document.pdf';
 	return currentLocale() === 'fr'
 		? `Document PDF : ${name}\n\nFichier : ${path}\n\n(Ouvrez le Finder via Slate pour joindre le fichier.)`
-		: `PDF document: ${name}\n\nFile: ${path}\n\n(Use Slate’s Finder reveal to attach the file.)`;
+		: `${t("fragment421")}${name}${t("fragment422")}${path}${t("fragment423")}`;
 }
 
 async function ensureShareablePath() {
@@ -20064,10 +20069,10 @@ function updateCreateSourceUi() {
 	});
 	if (state.createSource === 'blank') {
 		elements.createPick.style.display = 'none';
-		elements.createHint.textContent = 'Une page A4 blanche sera créée.';
+		elements.createHint.textContent = t('extra560');
 	} else {
 		elements.createPick.style.display = '';
-		elements.createHint.textContent = 'Choisir parmi .pdf pour le moment (autres formats à venir).';
+		elements.createHint.textContent = t('extra561');
 	}
 }
 
@@ -20080,12 +20085,12 @@ async function confirmCreate() {
 		try {
 			const bytes = await invokeBytes('create_blank_pdf');
 			const blob = new Blob([new Uint8Array(bytes)], { type: 'application/pdf' });
-			const file = new File([blob], 'Nouveau document.pdf', { type: 'application/pdf' });
+			const file = new File([blob], t('extra562'), { type: 'application/pdf' });
 			closeCreateView();
 			await openFile(file);
 		} catch (error) {
 			console.error(error);
-			setStatus(error instanceof Error ? error.message : 'Création impossible.', 'error');
+			setStatus(error instanceof Error ? error.message : t('extra563'), 'error');
 		}
 	}
 }
@@ -20262,10 +20267,10 @@ elements.modifierMoreTools?.addEventListener('click', () => {
 	trigger.textContent = open
 		? currentLocale() === 'fr'
 			? 'Moins'
-			: 'Less'
+			: t('extra565')
 		: currentLocale() === 'fr'
 			? 'Plus'
-			: 'More';
+			: t('extra567');
 });
 elements.scanEditBlocks.addEventListener('click', scanEditableBlocks);
 elements.ocrCurrentPage.addEventListener('click', () => runOcrForCurrentPage(true));
@@ -20881,7 +20886,7 @@ elements.saveChangesFilename.addEventListener('keydown', (event) => {
 elements.propertiesOkButton?.addEventListener('click', () => void applyPropertiesModal());
 elements.propertiesCancelButton?.addEventListener('click', closePropertiesModal);
 elements.propertiesHelpButton?.addEventListener('click', () => {
-	setStatus('Aide : métadonnées du PDF (titre, auteur, sécurité, polices…).', 'info');
+	setStatus(t('extra576'), 'info');
 });
 elements.propertiesBackdrop?.addEventListener('click', closePropertiesModal);
 elements.prepressBack?.addEventListener('click', closePrepressPanel);
@@ -21159,7 +21164,7 @@ document.querySelectorAll('[data-tool-action]').forEach((button) => {
 				setStatus(
 					currentLocale() === 'fr'
 						? 'Cette action n’est pas encore disponible.'
-						: 'This action is not available yet.',
+						: t('extra582'),
 					'error'
 				);
 		}
@@ -21170,7 +21175,7 @@ document.querySelectorAll('[data-tool-disabled]').forEach((button) => {
 	button.addEventListener('click', () =>
 		setStatus(
 			currentLocale() === 'fr'
-				? 'Cette fonction n’est pas encore disponible.'
+				? t('extra583')
 				: button.dataset.toolDisabled,
 			'error'
 		)
@@ -21202,7 +21207,7 @@ elements.searchForm.addEventListener('submit', async (event) => {
 		setStatus(results.length ? t('resultsFound', results.length) : t('noResults'));
 	} catch (error) {
 		console.error(error);
-		setStatus(error instanceof Error ? error.message : 'Search failed.', 'error');
+		setStatus(error instanceof Error ? error.message : t('extra584'), 'error');
 	} finally {
 		elements.searchButton.textContent = t('search');
 		updateUi();
@@ -21228,206 +21233,15 @@ document.addEventListener('drop', (event) => {
 	void handleDroppedFiles(event, state.tabs.length);
 });
 
-// ── Mise à jour automatique ─────────────────────────────────────────────
-let _updateInProgress = false;
-let _lastUpdateCheck = 0;
-// Version rejetée par l'utilisateur DANS CETTE SESSION (clic sur la croix / « Plus
-// tard ») : on ne la re-propose plus jusqu'au prochain lancement de l'app.
-let _updateDismissedVersion = null;
-// Tentatives automatiques après un échec d'installation (réseau/CDN pas encore
-// propagé, etc.) : on réessaie tout seul, puis on laisse le bouton « Réessayer ».
-let _updateRetryCount = 0;
-const UPDATE_AUTO_RETRIES = 2;
-const UPDATE_RETRY_DELAY_MS = 15 * 1000;
-
-function isAutoUpdateEnabled() {
-	return Boolean(state.settings?.autoUpdate);
-}
-
-function enableAutoUpdate() {
-	state.settings.autoUpdate = true;
-	saveSettings();
-	if (elements.settingAutoUpdate) elements.settingAutoUpdate.checked = true;
-}
-
-async function checkForUpdates() {
-	try {
-		_lastUpdateCheck = Date.now();
-		const info = await invokeCommand('check_for_update');
-		if (info && info.version) showUpdateToast(info);
-	} catch (_) {
-		// Vérification silencieuse : aucune mise à jour ou réseau indisponible.
-	}
-}
-
-// Vérification « opportuniste » : déclenchée quand l'utilisateur revient sur l'app
-// (focus / onglet visible), au plus une fois par minute, pour que le pop-up monte
-// tout seul sans attendre l'intervalle ni redémarrer.
-function maybeCheckForUpdates() {
-	// On revérifie même si le pop-up est déjà affiché : showUpdateToast rafraîchit la
-	// version en place si une release plus récente est sortie entre-temps.
-	if (_updateInProgress) return;
-	if (Date.now() - _lastUpdateCheck < 15 * 1000) return;
-	void checkForUpdates();
-}
-
-function showUpdateToast(info) {
-	const auto = isAutoUpdateEnabled();
-	if (!auto && info && info.version && _updateDismissedVersion === info.version) return;
-	const fr = currentLocale() === 'fr';
-	const existing = document.getElementById('slate-update-toast');
-	if (existing) {
-		if (info.version && existing.dataset.version !== info.version) {
-			existing.dataset.version = info.version;
-			const sub = existing.querySelector('.slate-update-toast-sub');
-			if (sub && !_updateInProgress) {
-				sub.textContent = fr ? `Slate ${info.version} est prêt à être installé.` : `Slate ${info.version} is ready to install.`;
-			}
-		}
-		if (auto && !_updateInProgress) void startUpdateInstall(existing);
-		return;
-	}
-	_updateRetryCount = 0;
-	const toast = document.createElement('div');
-	toast.id = 'slate-update-toast';
-	toast.className = 'slate-update-toast';
-	toast.setAttribute('role', 'alert');
-	toast.dataset.version = info.version || '';
-	toast.innerHTML = `
-		<button type="button" class="slate-update-toast-close" aria-label="${fr ? 'Ignorer' : 'Dismiss'}" title="${fr ? 'Ignorer jusqu’au prochain lancement' : 'Dismiss until next launch'}">
-			<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
-		</button>
-		<div class="slate-update-toast-body">
-			<span class="slate-update-toast-icon" aria-hidden="true">
-				<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="m7 11 5 5 5-5"/><path d="M5 21h14"/></svg>
-			</span>
-			<div class="slate-update-toast-text">
-				<div class="slate-update-toast-title">${fr ? 'Mise à jour disponible' : 'Update available'}</div>
-				<div class="slate-update-toast-sub">${fr ? `Slate ${info.version} est prêt à être installé.` : `Slate ${info.version} is ready to install.`}</div>
-			</div>
-		</div>
-		<div class="slate-update-toast-actions">
-			<button type="button" class="slate-update-later">${fr ? 'Plus tard' : 'Later'}</button>
-			<button type="button" class="slate-update-now">${fr ? 'Mettre à jour' : 'Update'}</button>
-			<button type="button" class="slate-update-always">${fr ? 'Mettre à jour automatiquement' : 'Update automatically'}</button>
-		</div>
-		<div class="slate-update-progress" hidden><div class="slate-update-progress-bar"></div></div>
-	`;
-	document.body.appendChild(toast);
-	requestAnimationFrame(() => toast.classList.add('is-visible'));
-
-	toast.querySelector('.slate-update-toast-close').addEventListener('click', () => dismissUpdateToast(toast));
-	toast.querySelector('.slate-update-later').addEventListener('click', () => dismissUpdateToast(toast));
-	toast.querySelector('.slate-update-now').addEventListener('click', () => void startUpdateInstall(toast));
-	toast.querySelector('.slate-update-always').addEventListener('click', () => {
-		enableAutoUpdate();
-		void startUpdateInstall(toast);
-	});
-	if (auto) void startUpdateInstall(toast);
-}
-
-function dismissUpdateToast(toast) {
-	// On mémorise la version rejetée : elle ne réapparaîtra pas tant que l'app
-	// tourne, mais reviendra au prochain lancement (la variable est réinitialisée).
-	if (toast && toast.dataset && toast.dataset.version) {
-		_updateDismissedVersion = toast.dataset.version;
-	}
-	toast.classList.remove('is-visible');
-	setTimeout(() => toast.remove(), 280);
-}
-
-async function startUpdateInstall(toast) {
-	if (_updateInProgress) return;
-	_updateInProgress = true;
-	const fr = currentLocale() === 'fr';
-	const actions = toast.querySelector('.slate-update-toast-actions');
-	const sub = toast.querySelector('.slate-update-toast-sub');
-	const progress = toast.querySelector('.slate-update-progress');
-	const bar = toast.querySelector('.slate-update-progress-bar');
-	if (actions) actions.remove();
-	toast.querySelector('.slate-update-toast-close')?.remove();
-	if (progress) progress.hidden = false;
-	if (sub) sub.textContent = fr ? 'Téléchargement de la mise à jour…' : 'Downloading update…';
-
-	const tauriListen = window.__TAURI__?.event?.listen;
-	let unlisten = null;
-	if (tauriListen) {
-		unlisten = await tauriListen('slate-update-progress', (event) => {
-			const payload = event?.payload || {};
-			if (payload.total && bar) {
-				const pct = Math.min(100, Math.round((payload.downloaded / payload.total) * 100));
-				bar.style.width = `${pct}%`;
-			}
-		});
-	}
-
-	try {
-		// install_update télécharge, installe, puis redémarre l'app : on ne revient
-		// normalement jamais ici en cas de succès.
-		if (sub) sub.textContent = fr ? 'Enregistrement du travail…' : 'Saving your work…';
-		await flushAutosave({ reason: 'update', allTabs: true });
-		persistOpenSession();
-		await flushOpenSessionToDisk();
-		try {
-			await invokeCommand('mark_update_relaunch');
-		} catch (_err) {
-			/* install_update pose le flag côté Rust */
-		}
-		if (sub) sub.textContent = fr ? 'Téléchargement de la mise à jour…' : 'Downloading update…';
-		await invokeCommand('install_update');
-	} catch (err) {
-		_updateInProgress = false;
-		if (typeof unlisten === 'function') unlisten();
-		if (progress) progress.hidden = true;
-		if (bar) bar.style.width = '0%';
-		// Échec (souvent transitoire : release en cours de propagation sur le CDN).
-		// On réessaie automatiquement, puis on rend la main avec un bouton « Réessayer ».
-		if (_updateRetryCount < UPDATE_AUTO_RETRIES) {
-			_updateRetryCount += 1;
-			const secs = Math.round(UPDATE_RETRY_DELAY_MS / 1000);
-			if (sub) {
-				sub.textContent = fr
-					? `Échec du téléchargement. Nouvelle tentative dans ${secs} s…`
-					: `Download failed. Retrying in ${secs} s…`;
-			}
-			setTimeout(() => {
-				if (document.body.contains(toast)) void startUpdateInstall(toast);
-			}, UPDATE_RETRY_DELAY_MS);
-			return;
-		}
-		if (sub) sub.textContent = fr ? 'Échec de la mise à jour.' : 'Update failed.';
-		showUpdateRetryButton(toast);
-		setStatus(fr ? 'La mise à jour a échoué.' : 'Update failed.', 'error');
-	}
-}
-
-// Après épuisement des tentatives automatiques : bouton « Réessayer » manuel
-// (le pop-up n'était plus actionnable, l'utilisateur restait bloqué).
-function showUpdateRetryButton(toast) {
-	if (!toast || toast.querySelector('.slate-update-toast-actions')) return;
-	const fr = currentLocale() === 'fr';
-	const actions = document.createElement('div');
-	actions.className = 'slate-update-toast-actions';
-	const retry = document.createElement('button');
-	retry.type = 'button';
-	retry.className = 'slate-update-now';
-	retry.textContent = fr ? 'Réessayer' : 'Retry';
-	retry.addEventListener('click', () => {
-		_updateRetryCount = 0;
-		void startUpdateInstall(toast);
-	});
-	actions.append(retry);
-	const progress = toast.querySelector('.slate-update-progress');
-	if (progress) toast.insertBefore(actions, progress);
-	else toast.append(actions);
-}
-
+// Slate RU uses manual updates only.
+function checkForUpdates() {}
+function showUpdateToast() {}
 bindTauriMenuEvents();
 bindShareUi();
 bindWindowCloseGuard();
 setupTabsScrolling();
 setupPreciseSelectionOverlay();
-setupDefaultAppPrompt();
+// Keep the existing default PDF application.
 setupSignFeature();
 setupAiAssistant();
 setupToolsResize();
@@ -21440,32 +21254,3 @@ renderHome();
 // Précharge le catalogue de polices au démarrage (liste prête dès la 1re ouverture
 // du panneau de mise en forme, et le backend a le temps de répondre).
 void ensureFontSelectPopulated();
-
-// Vérifie les mises à jour en arrière-plan, sans bloquer le démarrage, PUIS
-// régulièrement pendant l'utilisation : le pop-up apparaît dès qu'une nouvelle
-// version est publiée, sans avoir à redémarrer l'application.
-setTimeout(() => void checkForUpdates(), 3500);
-setInterval(() => {
-	// Pas de re-vérification pendant un téléchargement. Le pop-up déjà affiché est
-	// rafraîchi en place si une version plus récente vient d'être publiée.
-	if (_updateInProgress) return;
-	void checkForUpdates();
-}, 15 * 1000);
-
-// WebView : focus / visibilité. WKWebView n'émet souvent rien si on reste
-// dans la fenêtre — d'où le poll 15 s ci-dessus.
-window.addEventListener('focus', maybeCheckForUpdates);
-document.addEventListener('visibilitychange', () => {
-	if (!document.hidden) maybeCheckForUpdates();
-});
-// Fenêtre native Tauri : le focus OS (clic Dock, ⌘Tab) n'atteint pas toujours
-// le listener `window` du WebView.
-{
-	const getCurrentWindow = window.__TAURI__?.window?.getCurrentWindow;
-	const win = getCurrentWindow?.();
-	if (win?.onFocusChanged) {
-		void win.onFocusChanged(({ payload: focused }) => {
-			if (focused) maybeCheckForUpdates();
-		});
-	}
-}
