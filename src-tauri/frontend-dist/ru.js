@@ -621,3 +621,14 @@ Object.assign(ru, {
  splitPreparing: 'Подготовка PDF и выбор места сохранения…', splitDone: count => `Готово. Сохранено PDF-файлов: ${count}.`,
  splitDocumentChanged: 'Активный документ изменился. Закройте это окно и снова выберите «Разделить PDF».'
 });
+
+Object.assign(ru, {
+ exportImage: 'PDF в изображения', conversionPdfImages: 'PDF в изображения', conversionExtractImages: 'Извлечь изображения из PDF', conversionPdfText: 'PDF в текст TXT', conversionImageFormat: 'Изменить формат изображения',
+ conversionSave: 'Сохранить…', conversionPdfInfo: (name,count) => `${name} · ${count} ${pluralRu(count,'страница','страницы','страниц')}. Укажите номера и диапазоны через запятую.`,
+ conversionImageInfo: (name,w,h) => `${name} · ${w} × ${h} пикселей. Результат сохраняется отдельным файлом.`,
+ conversionFormatHint: format => format==='jpg' ? 'JPG: размер зависит от качества. Прозрачные области станут белыми.' : 'Сохранение без потерь. Прозрачность изображения сохраняется.',
+ conversionPageCount: count => `Будет создано изображений: ${count}, по одному на страницу.`,
+ conversionTextHint: 'Извлекается текстовый слой PDF. Для сканированных страниц сначала выберите «Распознать скан (OCR)» в разделе «Преобразовать».',
+ conversionPreparing: 'Подготовка документа и выбор места сохранения…', conversionDone: count => `Готово. Сохранено файлов: ${count}.`,
+ conversionProgress: (done,total) => `Преобразование: ${done} из ${total}.`, conversionDocumentChanged: 'Активный документ изменился. Закройте окно преобразования и откройте его снова.'
+});

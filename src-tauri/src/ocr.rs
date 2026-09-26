@@ -283,7 +283,10 @@ pub fn ocr_searchable_pdf(
     let mut document = pdfium
         .load_pdf_from_byte_slice(pdf_bytes, None)
         .map_err(|e| e.to_string())?;
-    let font = document.fonts_mut().helvetica();
+    // A CID font with Cyrillic coverage keeps Russian OCR text searchable/copyable.
+    let font = document.fonts_mut().load_true_type_from_bytes(
+        include_bytes!("../../crates/pdf-engine/assets/fonts/LiberationSans-Regular.ttf"), true
+    ).map_err(|e| e.to_string())?;
 
     let mut total_blocks = 0usize;
     for (index, prep) in preps.iter().enumerate() {
@@ -893,6 +896,7 @@ fn recognize_with_apple_vision(
 #[cfg(target_os = "macos")]
 fn vision_language(language: Option<&str>) -> &'static str {
     match language.unwrap_or_default() {
+        value if value.contains("rus") || value.starts_with("ru") => "ru-RU",
         value if value.contains("fra") || value.contains("fr") => "fr-FR",
         _ => "en-US",
     }
@@ -943,7 +947,12 @@ guard let image = NSImage(contentsOf: imageUrl),
 let request = VNRecognizeTextRequest()
 request.recognitionLevel = .accurate
 request.usesLanguageCorrection = true
-request.recognitionLanguages = [language, "en-US", "fr-FR"]
+let supported = try request.supportedRecognitionLanguages()
+guard supported.contains(language) else {
+    fputs("Requested OCR language is unavailable in Apple Vision\n", stderr)
+    exit(4)
+}
+request.recognitionLanguages = language == "en-US" ? ["en-US"] : [language, "en-US"]
 
 let handler = VNImageRequestHandler(cgImage: cgImage, options: [:])
 try handler.perform([request])
@@ -998,4 +1007,31 @@ fn parse_tsv(tsv: &str) -> Vec<OcrBlock> {
             })
         })
         .collect()
+}
+
+#[cfg(all(test, target_os = "macos"))]
+mod russian_ocr_tests {
+    use super::*;
+    #[test]
+    fn russian_scan_remains_searchable_after_apple_vision_ocr() {
+        let png = {
+            let guard = crate::pdf_engine::pdfium_guard().unwrap();
+            let mut doc = guard.create_new_pdf().unwrap();
+            let font = doc.fonts_mut().load_true_type_from_bytes(
+                include_bytes!("../../crates/pdf-engine/assets/fonts/LiberationSans-Regular.ttf"), true
+            ).unwrap();
+            let mut page = doc.pages_mut().create_page_at_end(PdfPagePaperSize::from_points(PdfPoints::new(420.0), PdfPoints::new(150.0))).unwrap();
+            page.objects_mut().create_text_object(PdfPoints::new(20.0), PdfPoints::new(90.0), "Проверка русского текста", font, PdfPoints::new(20.0)).unwrap();
+            page.regenerate_content().unwrap();
+            let image = page.render_with_config(&PdfRenderConfig::new().set_target_width(1260)).unwrap().as_image().unwrap();
+            let mut png = Vec::new(); image.write_to(&mut std::io::Cursor::new(&mut png), image::ImageFormat::Png).unwrap(); png
+        };
+        let scan = crate::pdf_tools::images_to_pdf(vec![png]).unwrap();
+        let (result, count) = ocr_searchable_pdf(&scan, Some("rus+eng".into())).unwrap();
+        assert!(count > 0);
+        let guard = crate::pdf_engine::pdfium_guard().unwrap();
+        let doc = guard.load_pdf_from_byte_slice(&result, None).unwrap();
+        let text = doc.pages().get(0).unwrap().text().unwrap().all();
+        assert!(text.contains("Проверка русского текста"), "{text:?}");
+    }
 }

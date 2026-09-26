@@ -1,3 +1,4 @@
+import { createConversionUi } from './conversion-ui.js';
 import { planPageSelection } from './page-selection.js';
 import { ru, pluralRu, localizeError } from './ru.js';
 import * as pdfjsLib from './vendor/pdf.min.mjs';
@@ -1230,6 +1231,8 @@ const iconTints = {
 	bookmark: 'amber',
 };
 
+function ocrLanguage() { return currentLocale() === 'ru' ? 'rus+eng' : currentLocale() === 'fr' ? 'fra+eng' : 'eng'; }
+
 function currentLocale() {
 	if (state.settings.language && state.settings.language !== 'auto') return state.settings.language;
 	const lang = navigator.language?.slice(0, 2).toLowerCase();
@@ -1284,7 +1287,7 @@ function localizeUi() {
 
 	setText('.top-tabs [data-open-panel="tools"]', 'allTools');
 	setText(elements.modifyTab, 'modify');
-	setText('.top-tabs [data-tool-disabled*="Convert"]', 'convert');
+	setText('#convert-tab', 'convert');
 	setText('#sign-tab', 'sign');
 	setText(elements.createTabButton, 'createTab');
 	for (const button of document.querySelectorAll('[data-tool-disabled]')) {
@@ -1305,7 +1308,8 @@ function localizeUi() {
 	if (elements.shareInviteInput) setPlaceholder(elements.shareInviteInput, 'shareInvitePlaceholder');
 	if (elements.shareInfoBanner) setText(elements.shareInfoBanner, 'shareInfoLocal');
 	if (elements.shareLinkSettingsHelp) setText(elements.shareLinkSettingsHelp, 'shareLinkHelp');
-	setText('.panel-heading strong', 'allTools');
+	setText('.panel-heading.tools-home-panel strong', 'allTools');
+	setText('#conversion-panel .panel-heading strong', 'convert');
 	document.querySelector('[data-close-panel]')?.setAttribute('aria-label', t('closeTools'));
 
 	// Libellés par clé explicite (jamais par index : tout décalage de ligne
@@ -7188,7 +7192,7 @@ async function runOcrForCurrentPage(openPanel = false, options = {}) {
 				ocrResult = await invokeCommand('ocr_pdf_page', {
 					bytes: Array.from(state.fileBytes),
 					page: state.page,
-					language: 'eng+fra'
+					language: ocrLanguage()
 				});
 			} catch (nativeError) {
 				console.warn('Native PDF OCR failed; falling back to rendered canvas.', nativeError);
@@ -7199,7 +7203,7 @@ async function runOcrForCurrentPage(openPanel = false, options = {}) {
 			const imageBytes = await canvasToPngBytes(canvas);
 			const ocrBlocks = await invokeCommand('ocr_page', {
 				imageBytes: Array.from(imageBytes),
-				language: 'eng+fra'
+				language: ocrLanguage()
 			});
 			ocrResult = {
 				blocks: ocrBlocks,
@@ -14722,6 +14726,7 @@ async function activateHeaderFooterTool() {
 }
 
 function toggleEditMode(force) {
+ closeConversionPanel();
 	state.editMode = typeof force === 'boolean' ? force : !state.editMode;
 	if (!state.editMode) setEditTool('select');
 	elements.app.classList.toggle('editing', state.editMode);
@@ -14797,6 +14802,7 @@ async function autoDetectEditableContent() {
 }
 
 function updateUi(renderPanels = true) {
+ syncConversionUi();
 	const hasPdf = Boolean(state.pdf);
 	elements.app.classList.toggle('has-pdf', hasPdf);
 	elements.app.classList.toggle('tools-hidden', !state.settings.showTools);
@@ -14841,7 +14847,7 @@ function updateUi(renderPanels = true) {
 		control.disabled = !hasPdf;
 	}
 	document.querySelectorAll('[data-tool-action]').forEach((button) => {
-		button.disabled = !hasPdf;
+		button.disabled = !hasPdf && button.dataset.toolAction !== 'images-to-pdf';
 	});
 
 	elements.prevPage.disabled = !hasPdf || state.page <= 1;
@@ -15321,10 +15327,10 @@ async function handleImagesToPdf() {
 		setStatus(t('processing'));
 		const out = await invokeBytes('images_to_pdf', { images });
 		const bytes = new Uint8Array(out);
-		const saved = await saveNativeFile('alto-images.pdf', 'pdf', bytes);
+		const saved = await saveNativeFile('Изображения.pdf', 'pdf', bytes);
 		if (saved) {
 			setStatus(t('imagesToPdfDone'));
-			await openPdfFromBytes(bytes, 'alto-images.pdf');
+			await openPdfFromBytes(bytes, fileNameFromPath(saved), { filePath: saved });
 		} else {
 			setStatus('');
 		}
@@ -15570,14 +15576,17 @@ async function handleOcrSearchable() {
 		setStatus(t('ocrLayerProcessing'));
 		const out = await invokeBytes('ocr_searchable_pdf', {
 			bytes: Array.from(state.fileBytes),
-			language: 'eng+fra'
+			language: ocrLanguage()
 		});
 		const saved = await saveNativeFile(
-			suggestFileName('recherchable'),
+			suggestFileName('распознанный', 'Распознанный документ.pdf'),
 			'pdf',
 			new Uint8Array(out)
 		);
-		if (saved) setStatus(t('ocrLayerDone'));
+		if (saved) {
+			await openPdfFromBytes(new Uint8Array(out), fileNameFromPath(saved), { filePath: saved });
+			setStatus(t('ocrLayerDone'));
+		}
 		else setStatus('');
 	} catch (error) {
 		console.error(error);
@@ -15585,26 +15594,7 @@ async function handleOcrSearchable() {
 	}
 }
 
-async function handleExtractImages() {
-	if (!state.fileBytes) {
-		setStatus(t('needPdfOpen'), 'error');
-		return;
-	}
-	try {
-		setStatus(t('processing'));
-		const bytes = await currentDocumentBytes();
-		const report = await invokeCommand('extract_images_to_folder', { bytes });
-		if (!report) {
-			setStatus('');
-			return;
-		}
-		const fmt = t('extractImagesDone');
-		setStatus(typeof fmt === 'function' ? fmt(report.count) : fmt);
-	} catch (error) {
-		console.error(error);
-		setStatus(error instanceof Error ? error.message : String(error), 'error');
-	}
-}
+async function handleExtractImages() { return conversionUi.open('embedded'); }
 
 async function handleUnlock() {
 	if (!state.fileBytes) {
@@ -16784,55 +16774,36 @@ async function handleRotatePage(pageNumber, angle) {
 	await _rotateQueue;
 }
 
-async function handleExportPageImage() {
-	if (!state.pdf) {
-		setStatus(t('needPdfOpen'), 'error');
-		return;
-	}
-	const format = await openFormatChoice(['png', 'jpeg']);
-	if (!format) return;
-	try {
-		const page = await state.pdf.getPage(state.page);
-		const viewport = page.getViewport({ scale: 3 });
-		const canvas = document.createElement('canvas');
-		canvas.width = Math.floor(viewport.width);
-		canvas.height = Math.floor(viewport.height);
-		const ctx = canvas.getContext('2d', { alpha: false });
-		if (!ctx) throw new Error(t('extra454'));
-		ctx.fillStyle = '#ffffff';
-		ctx.fillRect(0, 0, canvas.width, canvas.height);
-		await page.render({ canvasContext: ctx, viewport, annotationStorage: state.pdf.annotationStorage })
-			.promise;
-		const mime = format === 'png' ? 'image/png' : 'image/jpeg';
-		const quality = format === 'png' ? undefined : 0.95;
-		const blob = await new Promise((resolve) => canvas.toBlob(resolve, mime, quality));
-		if (!blob) throw new Error(t('extra455'));
-		const bytes = new Uint8Array(await blob.arrayBuffer());
-		const filename = suggestFileName(`page-${state.page}`, `alto-page-${state.page}.${format}`)
-			.replace(/\.pdf$/i, `.${format}`);
-		await saveNativeFile(filename, format, bytes);
-	} catch (error) {
-		console.error(error);
-		setStatus(error instanceof Error ? error.message : String(error), 'error');
-	}
+const conversionUi = createConversionUi({
+ t, invoke: invokeCommand, showStatus: setStatus, errorText: localizeError,
+ getDocument: () => state.pdf ? { id: state.activeTabId, filename: state.fileName || 'Документ.pdf', pageCount: state.pdf.numPages, sourcePath: currentTab()?.filePath || null } : null,
+ preparePdf: async () => { if (state.nativeTextDirty) await syncNativeDocumentBytes({render:false}); return currentDocumentBytes(); }
+});
+function handleExportPageImage() { return conversionUi.open('pages'); }
+function openConversionPanel() {
+ showToolsPanel();
+ document.getElementById('conversion-panel').classList.remove('hidden');
+ elements.toolsPanel.classList.add('conversion-open');
+ syncConversionUi();
 }
-
-function openFormatChoice(formats) {
-	return new Promise((resolve) => {
-		const choice = window.prompt(
-			currentLocale() === 'fr'
-				? `Format d'export (${formats.join(' / ')}) :`
-				: `${t("fragment384")}${formats.join(' / ')}):`,
-			formats[0]
-		);
-		if (!choice) {
-			resolve(null);
-			return;
-		}
-		const normalized = choice.trim().toLowerCase();
-		resolve(formats.includes(normalized) ? normalized : formats[0]);
-	});
+function closeConversionPanel() {
+ document.getElementById('conversion-panel').classList.add('hidden');
+ elements.toolsPanel.classList.remove('conversion-open');
+ syncConversionUi();
 }
+function syncConversionUi() {
+ const open = elements.toolsPanel.classList.contains('conversion-open');
+ document.getElementById('convert-tab').classList.toggle('active', open);
+ if(open) elements.allToolsTab?.classList.remove('active');
+ document.querySelectorAll('[data-conversion-pdf]').forEach(button=>{button.disabled=!state.pdf;});
+}
+document.getElementById('convert-tab').addEventListener('click',openConversionPanel);
+document.getElementById('conversion-back').addEventListener('click',showToolsPanel);
+document.querySelectorAll('[data-conversion-action]').forEach(button=>button.addEventListener('click',()=>{
+ if(button.dataset.conversionAction==='to-pdf')void handleImagesToPdf();
+ else if(button.dataset.conversionAction==='ocr')void handleOcrSearchable();
+ else void conversionUi.open(button.dataset.conversionAction);
+}));
 
 let _propertiesSnapshot = null;
 
@@ -19470,6 +19441,9 @@ function bindTauriMenuEvents() {
 	tauriListen('alto-recent-files', () => handleShowRecent());
 	tauriListen('alto-combine-files', () => void handleCombineFiles());
 	tauriListen('alto-split-pdf', handleSplitPdf);
+	tauriListen('alto-export-image', () => void conversionUi.open('pages'));
+	tauriListen('alto-export-text', () => void conversionUi.open('text'));
+	tauriListen('slate-conversion-progress', event => conversionUi.progress(event.payload));
 	tauriListen('alto-compress-pdf', () => void handleCompressPdf());
 	tauriListen('alto-protect-pdf', () => void handleProtectPdf());
 	tauriListen('alto-delete-page', () => void handleDeleteCurrentPage());
@@ -19610,6 +19584,7 @@ async function drainPendingOpenFiles() {
 }
 
 function showToolsPanel() {
+ closeConversionPanel();
 	// « Tous les outils » doit toujours ramener à l'accueil des outils ET quitter
 	// le mode Modifier s'il est actif (sinon l'onglet Modifier reste sélectionné).
 	if (state.editMode) {

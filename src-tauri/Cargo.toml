@@ -1,6 +1,6 @@
 [package]
 name = "sofdocs-desktop"
-version = "0.3.138-ru.4"
+version = "0.3.138-ru.5"
 edition = "2021"
 description = "Alto desktop application — native file access and offline editing"
 license = "AGPL-3.0-or-later"
@@ -40,7 +40,9 @@ lopdf = "0.40"
 rand = "0.9"
 regex = "1"
 reqwest = { version = "0.12", default-features = false, features = ["json", "rustls-tls"] }
-image = { version = "0.25.10", default-features = false, features = ["png", "jpeg"] }
+image = { version = "0.25.10", default-features = false, features = ["png", "jpeg", "webp", "tiff"] }
+tiff = "0.11.2"
+png = "0.18"
 underskrift = "0.1"
 rayon = "1"
 # Énumération des polices installées (cross-OS : CoreText macOS / DirectWrite

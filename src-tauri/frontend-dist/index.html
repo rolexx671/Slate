@@ -51,7 +51,7 @@
 					<nav class="top-tabs" aria-label="Основные инструменты">
 						<button class="tab active" type="button" data-open-panel="tools">Все инструменты</button>
 						<button class="tab" id="modify-tab" type="button">Редактировать</button>
-						<button class="tab" type="button" data-tool-disabled="Преобразование PDF пока недоступно">Преобразовать</button>
+						<button class="tab" id="convert-tab" type="button">Преобразовать</button>
 						<button class="tab" id="sign-tab" type="button" data-open-panel="sign">Электронная подпись</button>
 						<button class="tab" id="ai-tab" type="button" data-open-panel="ai">ИИ-помощник</button>
 					</nav>
@@ -120,7 +120,20 @@
 			</header>
 
 			<aside class="tools-panel" id="tools-panel">
-				<div class="panel-heading tools-home-panel">
+				<section class="conversion-panel hidden" id="conversion-panel" aria-label="Преобразовать">
+                    <div class="panel-heading"><strong>Преобразовать</strong><button id="conversion-back" type="button" aria-label="Все инструменты">←</button></div>
+                    <p class="conversion-section-title">Из PDF</p>
+                    <button class="conversion-card" type="button" data-conversion-action="pages" data-conversion-pdf><strong>PDF в изображения</strong><span>JPG, PNG, WebP или TIFF. Все страницы или выбранный диапазон.</span></button>
+                    <button class="conversion-card" type="button" data-conversion-action="embedded" data-conversion-pdf><strong>Извлечь изображения</strong><span>Только встроенные картинки, без текста страницы.</span></button>
+                    <button class="conversion-card" type="button" data-conversion-action="text" data-conversion-pdf><strong>PDF в текст TXT</strong><span>Текст выбранных страниц в кодировке UTF-8.</span></button>
+                    <button class="conversion-card" type="button" data-conversion-action="ocr" data-conversion-pdf><strong>Распознать скан (OCR)</strong><span>Добавить текстовый слой для поиска и экспорта в TXT.</span></button>
+                    <p class="conversion-section-title">В PDF</p>
+                    <button class="conversion-card" type="button" data-conversion-action="to-pdf"><strong>Изображения в PDF</strong><span>Статичные JPG, PNG, WebP и одностраничные TIFF.</span></button>
+                    <p class="conversion-section-title">Изображения</p>
+                    <button class="conversion-card" type="button" data-conversion-action="image"><strong>Изменить формат изображения</strong><span>Сохранить картинку в JPG, PNG, WebP или TIFF.</span></button>
+                    <p class="conversion-note">Преобразование выполняется на этом Mac. Исходные файлы сохраняются.</p>
+                </section>
+                <div class="panel-heading tools-home-panel">
 					<strong>Все инструменты</strong>
 					<button class="close-panel" type="button" data-close-panel aria-label="Закрыть инструменты">x</button>
 				</div>
@@ -734,7 +747,26 @@
 				</footer>
 			</section>
 
-			<div class="modal-backdrop hidden" id="split-pdf-backdrop"></div>
+			<div class="modal-backdrop hidden" id="conversion-backdrop"></div>
+            <section class="save-changes-modal conversion-modal hidden" id="conversion-modal" role="dialog" aria-modal="true" aria-labelledby="conversion-title">
+                <p class="eyebrow">Slate RU</p><h2 id="conversion-title">Преобразовать</h2><p id="conversion-help"></p>
+                <div id="conversion-fields">
+                    <label class="conversion-field" id="conversion-pages-row"><span>Страницы</span><input id="conversion-pages" type="text" maxlength="10000" autocomplete="off" spellcheck="false" aria-describedby="conversion-error" /></label>
+                    <fieldset id="conversion-formats"><legend>Формат изображения</legend><div class="conversion-formats-grid">
+                        <label><input type="radio" name="conversion-format" value="jpg" /><strong>JPG</strong><span>Компактный, для фотографий</span></label>
+                        <label><input type="radio" name="conversion-format" value="png" checked /><strong>PNG</strong><span>Чёткий текст и схемы</span></label>
+                        <label><input type="radio" name="conversion-format" value="webp" /><strong>WebP</strong><span>Для сайтов и публикаций</span></label>
+                        <label><input type="radio" name="conversion-format" value="tiff" /><strong>TIFF</strong><span>Для печати и архивов</span></label>
+                    </div></fieldset>
+                    <label class="conversion-field" id="conversion-dpi-row"><span>Разрешение страницы</span><select id="conversion-dpi"><option value="72">72 dpi — быстрый просмотр</option><option value="150" selected>150 dpi — стандартное</option><option value="300">300 dpi — высокое качество</option></select></label>
+                    <label class="conversion-field" id="conversion-quality-row"><span>Качество JPG</span><select id="conversion-quality"><option value="75">75% — компактный файл</option><option value="90" selected>90% — высокое качество</option><option value="100">100% — максимальное качество</option></select></label>
+                </div>
+                <p id="conversion-summary" role="status" aria-live="polite"></p><p id="conversion-error" class="protect-error" role="alert"></p>
+                <div id="conversion-result" class="hidden"><p id="conversion-result-path"></p><button id="conversion-reveal" type="button">Показать в Finder</button></div>
+                <footer class="save-changes-actions"><button id="conversion-cancel" type="button">Отмена</button><button id="conversion-confirm" class="filled" type="button">Сохранить…</button></footer>
+            </section>
+
+            <div class="modal-backdrop hidden" id="split-pdf-backdrop"></div>
             <section class="save-changes-modal split-pdf-modal hidden" id="split-pdf-modal" role="dialog" aria-modal="true" aria-labelledby="split-pdf-title">
                 <p class="eyebrow">Slate RU</p><h2 id="split-pdf-title">Разделить PDF</h2>
                 <p id="split-pdf-help"></p>

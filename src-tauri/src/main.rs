@@ -19,6 +19,7 @@ use sofdocs_desktop::{
 mod updater;
 mod appearance;
 mod pdf_split;
+mod conversion;
 
 // Impression depuis le Finder (Apple Event « print documents »). Spécifique macOS :
 // Tauri ne forwarde QUE l'event « open », pas « print ». On installe donc notre
@@ -1030,7 +1031,7 @@ async fn add_page_numbers(
 
 #[tauri::command]
 async fn images_to_pdf(images: Vec<Vec<u8>>) -> Result<tauri::ipc::Response, String> {
-    pdf_tools::images_to_pdf(images).map(tauri::ipc::Response::new)
+    conversion::checked_images_to_pdf(images).map(tauri::ipc::Response::new)
 }
 
 #[tauri::command]
@@ -1778,7 +1779,7 @@ async fn pick_images(app: tauri::AppHandle) -> Result<Vec<Vec<u8>>, String> {
     let files = app
         .dialog()
         .file()
-        .add_filter(dialog_filter_images(), &["png", "jpg", "jpeg"])
+        .add_filter(dialog_filter_images(), &["png", "jpg", "jpeg", "webp", "tif", "tiff"])
         .blocking_pick_files();
 
     let mut out = Vec::new();
@@ -2259,7 +2260,8 @@ fn main() {
             let export_menu = SubmenuBuilder::new(app, "Экспорт PDF")
                 .text("export-edited-pdf", "Изменённый PDF…")
                 .text("unsupported-export-word", "Microsoft Word")
-                .text("unsupported-export-image", "Изображение")
+                .text("export-image", "Изображения…")
+                .text("export-text", "Текст TXT…")
                 .build()?;
             // Item « Imprimer » avec raccourci natif ⌘P : macOS route alors Cmd+P
             // vers le menu (→ alto-print → impression du PDF) au lieu de laisser le
@@ -2484,6 +2486,8 @@ fn main() {
                 "recent-files" => Some("alto-recent-files"),
                 "combine-files" => Some("alto-combine-files"),
                 "split-pdf" => Some("alto-split-pdf"),
+                "export-image" => Some("alto-export-image"),
+                "export-text" => Some("alto-export-text"),
                 "compress-pdf" => Some("alto-compress-pdf"),
                 "protect-pdf" => Some("alto-protect-pdf"),
                 "delete-page" => Some("alto-delete-page"),
@@ -2522,6 +2526,9 @@ fn main() {
         .invoke_handler(tauri::generate_handler![
             appearance::set_native_theme,
             pdf_split::split_pdf_dialog,
+            conversion::pick_conversion_image,
+            conversion::convert_image_dialog,
+            conversion::export_pdf_conversion,
             analyze_pdf_page,
             cache_document,
             analyze_pdf_page_cached,
